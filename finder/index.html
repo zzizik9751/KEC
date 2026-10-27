@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>KEC 분기회로 계산서 INDEX</title>
+<style>
+  :root{--bg:#f7f8fa;--card:#fff;--bd:#d9dde3;--accent:#1f6feb;--th:#eef2f7;--muted:#6b7280;--ok:#067647;--warn:#b54708}
+  *{box-sizing:border-box}
+  body{margin:0;padding:20px;font-family:"Pretendard","Malgun Gothic",sans-serif;background:var(--bg);color:#1f2937;font-size:14px;line-height:1.6}
+  h1{font-size:22px;margin:0 0 6px}
+  h2{font-size:16px;margin:18px 0 10px;padding:7px 12px;background:#1f2937;color:#fff;border-radius:5px}
+  h3{font-size:13px;margin:14px 0 6px;color:var(--accent);border-left:3px solid var(--accent);padding-left:8px}
+  .sub{color:var(--muted);font-size:12px}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:16px;margin-bottom:14px}
+  .input-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px}
+  .input-grid label{display:block;font-size:12px;color:#374151;white-space:nowrap;min-width:0;overflow:hidden}
+  .input-grid input,.input-grid select{display:block;width:100%;margin-top:3px;padding:6px 8px;border:1px solid var(--bd);border-radius:4px;font-size:13px;box-sizing:border-box}
+  .rec-box{background:#fff8dc;border:2px solid #f0c419;border-radius:8px;padding:16px;margin-top:10px}
+  .rec-box .badge{display:inline-block;background:#b54708;color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:bold;margin-right:8px}
+  .rec-box .type{font-size:22px;font-weight:bold;color:#1f6feb}
+  .rec-box .label{font-size:14px;color:#374151;margin-top:4px}
+  .rec-box .reason{font-size:12px;color:var(--muted);margin-top:6px}
+  .rec-box .btn{display:inline-block;background:#059669;color:#fff;padding:9px 18px;border-radius:5px;text-decoration:none;font-weight:bold;margin-top:10px;font-size:14px}
+  .rec-box .btn:hover{background:#047857}
+  .type-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
+  .type-card{border:1px solid var(--bd);border-radius:6px;padding:10px;background:#fff}
+  .type-card.recommended{border:2px solid #f0c419;background:#fff8dc;box-shadow:0 2px 6px rgba(240,196,25,.25)}
+  .type-card .id{font-size:16px;font-weight:bold;color:var(--accent)}
+  .type-card .lbl{font-size:11px;color:#374151;margin:4px 0;min-height:30px}
+  .type-card .meta{font-size:10px;color:var(--muted);line-height:1.4;margin-bottom:6px}
+  .type-card a{display:block;background:var(--accent);color:#fff;text-align:center;padding:5px;border-radius:3px;text-decoration:none;font-size:12px}
+  .type-card a:hover{background:#1559c4}
+  .grp-title{grid-column:1/-1;font-size:11px;color:var(--muted);font-weight:bold;padding:6px 0 0 2px;letter-spacing:0.5px}
+  .toggle-bar{display:flex;gap:0;margin-bottom:12px}
+  .toggle-btn{background:#fff;border:1px solid var(--bd);padding:10px 22px;cursor:pointer;font-size:14px;font-weight:600;color:#6b7280;border-radius:6px 6px 0 0;margin-right:4px}
+  .toggle-btn.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+  .footer{font-size:11px;color:var(--muted);margin-top:18px;text-align:center;line-height:1.6}
+  .hint{background:#eef6ff;border-left:3px solid var(--accent);padding:8px 12px;border-radius:4px;font-size:12px;margin:10px 0}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>KEC 분기회로 계산서 INDEX</h1>
+  <div class="sub">부하조건을 입력하면 적정한 계산서를 자동 안내합니다. 두 가지 버전을 제공합니다.</div>
+  <div class="hint">
+    <b>📘 서적판</b>(G1~M7 12종): 기술지침 PDF 5.1.2~5.1.13 절차를 그대로 재현, PDF 예시값과 일치.<br>
+    <b>🛠 실무판</b>(단일 통합): 실무 단순화 기준(XLPE·산업용 MCCB·병렬 없음·BUS DUCT 없음·400A 한도) + 계산순서 간소화(부하→차단기→케이블).
+  </div>
+</div>
+
+<div class="card">
+  <h2>부하조건 입력</h2>
+  <div class="input-grid">
+    <label>부하 종류
+      <select id="load" onchange="onLoadChange()">
+        <option value="non">비전동기 (조명·콘센트·기타)</option>
+        <option value="motor" selected>전동기</option>
+      </select></label>
+    <label>전기방식
+      <select id="phase" onchange="classify()">
+        <option value="1">단상</option>
+        <option value="3" selected>3상</option>
+      </select></label>
+    <label>전압 V
+      <select id="voltage" onchange="classify()">
+        <option>220</option><option selected>380</option>
+      </select></label>
+    <label id="lbl_cap">용량 (kW)<input id="capacity" type="number" step="0.5" value="45" oninput="classify()"></label>
+    <label id="lbl_start">기동방식
+      <select id="starting" onchange="classify()">
+        <option value="전전압">전전압(직입) 기동</option>
+        <option value="Y-Δ" selected>Y-Δ 기동</option>
+        <option value="리액터">리액터 50/65/80%</option>
+        <option value="기동보상">기동보상기 50/65/80%</option>
+        <option value="Soft Start">Soft Start (λ=3~5)</option>
+        <option value="Inverter">Inverter (λ=1~2)</option>
+      </select></label>
+  </div>
+</div>
+
+<div class="card">
+  <div class="toggle-bar">
+    <button class="toggle-btn active" id="tab_book" onclick="switchTab('book')">📘 서적판 추천 (G1~M7)</button>
+    <button class="toggle-btn" id="tab_real" onclick="switchTab('real')">🛠 실무판 추천 (단일 통합)</button>
+  </div>
+  <div id="panel_book">
+    <h3>서적판 추천 (PDF 5.1.x 절차 그대로)</h3>
+    <div id="rec_book"></div>
+  </div>
+  <div id="panel_real" style="display:none">
+    <h3>실무판 — 단순화 통합 계산서</h3>
+    <div id="rec_real"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>전체 계산서 목록</h2>
+  <h3>서적판 12종 (PDF 5.1.2~5.1.13 절차 충실 재현)</h3>
+  <div class="type-grid" id="type-list"></div>
+  <h3 style="margin-top:18px">실무판 (단일 통합)</h3>
+  <div class="type-grid">
+    <div class="type-card" style="grid-column:span 2">
+      <div class="id">🛠 실무판 (탭형)</div>
+      <div class="lbl">공통조건 · 비전동기 · 전동기 3개 탭 통합. 부하→차단기→케이블 순서.</div>
+      <div class="meta">XLPE 한정, 산업용 MCCB, 병렬·BUS DUCT 없음, 400A 한도 경고. 기동방식 17종 select.</div>
+      <a href="../practical/index.html" target="_blank">실무판 열기</a>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  KEC 분기회로 계산서 — 서적판 G1~G5·M1~M7 (PDF 검증 완료) · 실무판 단일 통합 (4단순화 기준 적용)<br>
+  산식·근거는 각 계산서 「산출근거」 버튼에서 열람 가능
+</div>
+
+<script>
+const TYPES = [
+  {id:'G1', label:'비전동기 단상 소용량 (HFIX·A1)',                cap:'~3 kVA',     file:'../g1.html', meta:'단상 220V, HFIX 1.5~6㎟'},
+  {id:'G2', label:'비전동기 3상 중소용량 (F-CV·B2 4C)',            cap:'~30 kVA',    file:'../g2.html', meta:'3상 380V, F-CV 4Core'},
+  {id:'G3', label:'비전동기 3상 중용량 (HFCO·B2 4C)',              cap:'30~100 kVA', file:'../g3.html', meta:'3상 380V, HFCO 4Core 저독성'},
+  {id:'G4', label:'비전동기 3상 대용량 (F-CV·B1 삼각)',            cap:'100~300 kVA',file:'../g4.html', meta:'3상 380V, F-CV 1Core 삼각'},
+  {id:'G5', label:'비전동기 3상 초대용량 (HFCO·F2 평면 병렬)',     cap:'300~ kVA',   file:'../g5.html', meta:'3상 380V, HFCO 1Core×2병렬'},
+  {id:'M1', label:'전동기 단상 소형 (전전압)',                     cap:'~3 kW',      file:'../m1.html', meta:'단상 220V, F-CV 2C, 전전압'},
+  {id:'M2', label:'전동기 3상 중형 (전전압)',                      cap:'5~30 kW',    file:'../m2.html', meta:'3상 380V, F-CV 3C, 전전압'},
+  {id:'M3', label:'전동기 3상 중대형 (Y-Δ)',                       cap:'30~75 kW',   file:'../m3.html', meta:'F-FR-8 1C B1삼각, Y-Δ'},
+  {id:'M4', label:'전동기 3상 대형 (리액터 기동)',                 cap:'55~150 kW',  file:'../m4.html', meta:'HFCO 1C F2평면, 리액터'},
+  {id:'M5', label:'전동기 3상 대형 (기동보상기)',                  cap:'90~250 kW',  file:'../m5.html', meta:'TFR-CV 1C F1삼각, 기동보상'},
+  {id:'M6', label:'전동기 3상 초대형 (Soft Start·병렬·ACB)',       cap:'250~ kW',    file:'../m6.html', meta:'HFCO 1C F2×2병렬, ACB+BUS DUCT'},
+  {id:'M7', label:'전동기 3상 초대형 (Inverter·병렬·ACB)',         cap:'250~ kW',    file:'../m7.html', meta:'HFCO 1C F2×2병렬, ACB+BUS DUCT'}
+];
+
+function onLoadChange(){
+  const isMotor = document.getElementById('load').value === 'motor';
+  document.getElementById('lbl_cap').firstChild.textContent = isMotor ? '용량 (kW)' : '용량 (kVA)';
+  document.getElementById('lbl_start').style.display = isMotor ? '' : 'none';
+  classify();
+}
+
+function classify(){
+  const isMotor = document.getElementById('load').value === 'motor';
+  const phase = +document.getElementById('phase').value;
+  const cap = +document.getElementById('capacity').value;
+  const starting = document.getElementById('starting').value;
+
+  let bookType, bookReason;
+  if (!isMotor){
+    if (phase === 1){ bookType='G1'; bookReason='단상 비전동기 → G1'; }
+    else if (cap > 300){ bookType='G5'; bookReason=`3상 비전동기 ${cap}kVA(>300) → G5(병렬)`; }
+    else if (cap > 100){ bookType='G4'; bookReason=`3상 비전동기 ${cap}kVA(100~300) → G4(단심 삼각)`; }
+    else if (cap > 30){ bookType='G3'; bookReason=`3상 비전동기 ${cap}kVA(30~100) → G3(저독성)`; }
+    else { bookType='G2'; bookReason=`3상 비전동기 ${cap}kVA(~30) → G2(F-CV 다심)`; }
+  } else {
+    if (phase === 1){ bookType='M1'; bookReason='단상 전동기 → M1(전전압)'; }
+    else if (starting === 'Y-Δ'){ bookType='M3'; bookReason='Y-Δ → M3(1차/2차 이중배선)'; }
+    else if (starting === '리액터'){ bookType='M4'; bookReason='리액터 → M4'; }
+    else if (starting === '기동보상'){ bookType='M5'; bookReason='기동보상기 → M5'; }
+    else if (starting === 'Soft Start'){ bookType='M6'; bookReason='Soft Start → M6(병렬·ACB)'; }
+    else if (starting === 'Inverter'){ bookType='M7'; bookReason='Inverter → M7(병렬·ACB)'; }
+    else { bookType='M2'; bookReason='전전압 → M2'; }
+  }
+
+  const willWarn = (!isMotor && cap > 250) || (isMotor && cap > 220);
+
+  const t = TYPES.find(x => x.id === bookType);
+  document.getElementById('rec_book').innerHTML =
+    `<div class="rec-box">
+      <span class="badge">📘 서적판</span>
+      <span class="type">${t.id}</span> &nbsp; <span class="label">— ${t.label}</span>
+      <div class="reason">${bookReason} · 적용범위 ${t.cap} · ${t.meta}</div>
+      <a class="btn" href="${t.file}" target="_blank">${t.id} 계산서 열기 →</a>
+     </div>`;
+
+  const realTab = isMotor ? '③ 전동기 분기' : '② 비전동기 분기';
+  document.getElementById('rec_real').innerHTML =
+    `<div class="rec-box" style="border-color:#059669;background:#ecfdf5">
+      <span class="badge" style="background:#059669">🛠 실무판</span>
+      <span class="type" style="color:#059669">실무판</span>
+      <div class="reason">통합 계산서의 ① 공통조건 탭에서 전원·변압기를 설정한 뒤 <b>${realTab}</b> 탭에서 ${cap}${isMotor?'kW':'kVA'}, ${phase}상${isMotor?', '+starting+' 기동':''} 입력</div>
+      ${willWarn ? `<div class="reason" style="color:#b54708;font-weight:bold">⚠ ${cap}${isMotor?'kW':'kVA'}는 실무 한도(${isMotor?'220kW':'250kVA'}) 초과 — 부하 분리 권고가 표시됩니다.</div>` : ''}
+      <a class="btn" href="../practical/index.html" target="_blank">실무판 열기 →</a>
+     </div>`;
+
+  renderTypeList(bookType);
+}
+
+function switchTab(name){
+  document.getElementById('tab_book').classList.toggle('active', name==='book');
+  document.getElementById('tab_real').classList.toggle('active', name==='real');
+  document.getElementById('panel_book').style.display = name==='book' ? '' : 'none';
+  document.getElementById('panel_real').style.display = name==='real' ? '' : 'none';
+}
+
+function renderTypeList(recommended){
+  const groups = [
+    {title:'비전동기 (G계열)', types:TYPES.filter(t=>t.id.startsWith('G'))},
+    {title:'전동기 (M계열)', types:TYPES.filter(t=>t.id.startsWith('M'))}
+  ];
+  let html = '';
+  for (const g of groups){
+    html += `<div class="grp-title">${g.title}</div>`;
+    for (const t of g.types){
+      const cls = t.id === recommended ? 'type-card recommended' : 'type-card';
+      html += `<div class="${cls}">
+        <div class="id">${t.id}${t.id===recommended?' ★':''}</div>
+        <div class="lbl">${t.label}</div>
+        <div class="meta">${t.cap}<br>${t.meta}</div>
+        <a href="${t.file}" target="_blank">계산서 열기</a>
+      </div>`;
+    }
+  }
+  document.getElementById('type-list').innerHTML = html;
+}
+
+onLoadChange();
+</script>
+</body>
+</html>

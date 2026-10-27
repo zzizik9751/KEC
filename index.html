@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KEC 분기회로 계산서</title>
+<style>
+:root{--bg:#f3f5f8;--surface:#fff;--fg:#1a2330;--muted:#566274;--line:#d8dee6;--soft:#eaeef3;
+--book:#3446b0;--book-bg:#e7eaf9;--real:#0b7664;--real-bg:#dcf2ed;--go:#17784a;--warn:#8a5a00;--warn-bg:#fff3d6;
+--font:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#12171f;--surface:#1a212b;--fg:#e6ebf2;--muted:#9aa7b8;--line:#2d3746;--soft:#222b37;
+--book:#8e9cff;--book-bg:#222a52;--real:#4fd1b6;--real-bg:#12342e;--go:#5fd397;--warn:#ffd27a;--warn-bg:#3a2f12}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.65}
+.wrap{max-width:860px;margin:0 auto;padding:28px 16px 56px}
+h1{font-size:clamp(24px,5vw,32px);margin:0 0 4px;line-height:1.25}
+.sub{color:var(--muted);margin:0 0 18px}
+.badge{display:inline-block;font-size:12px;font-weight:700;background:var(--warn-bg);color:var(--warn);padding:2px 10px;border-radius:3px;margin-left:8px;vertical-align:middle}
+#welcome{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--book);border-radius:6px;padding:14px 18px;margin-bottom:22px;display:flex;gap:14px;align-items:flex-start}
+#welcome p{margin:0;flex:1}
+#welcome button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--soft);color:var(--fg);border-radius:4px;padding:4px 12px;cursor:pointer}
+.try{background:var(--surface);border:2px solid var(--fg);border-radius:8px;padding:20px 22px;margin-bottom:26px}
+.try h2{margin:0 0 4px;font-size:18px}
+.try p{margin:0 0 14px;color:var(--muted)}
+.btn{display:inline-block;font:inherit;font-weight:700;text-decoration:none;border-radius:6px;padding:12px 22px;background:var(--go);color:#fff;border:0}
+.btn.book{background:var(--book);color:#fff}.btn.real{background:var(--real);color:#fff}
+@media (prefers-color-scheme:dark){.btn,.btn.book,.btn.real{color:#0b1017}}
+.btn:hover{filter:brightness(1.1)}.btn:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var(--book);outline-offset:2px}
+.try small{display:block;margin-top:10px;color:var(--muted)}
+h2.sec{font-size:17px;margin:0 0 10px}
+.steps{list-style:none;margin:0 0 26px;padding:0;display:grid;gap:10px}
+.steps li{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px 14px 62px;position:relative}
+.steps li::before{content:attr(data-n);position:absolute;left:16px;top:14px;width:32px;height:32px;border-radius:50%;background:var(--fg);color:var(--bg);display:grid;place-items:center;font-weight:700}
+.steps b{display:block}
+.steps span{color:var(--muted);font-size:14px;display:block;margin-bottom:8px}
+.steps a{font-weight:700;color:var(--book)}
+.cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-bottom:26px}
+.case{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.case b{display:block}.case span{display:block;color:var(--muted);font-size:13.5px;margin:2px 0 8px}
+.case a{font-weight:700;color:var(--book)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:26px}
+.chips a{border:1px solid var(--line);background:var(--surface);color:var(--fg);text-decoration:none;border-radius:4px;padding:3px 12px;font-size:14px}
+.chips a:hover{border-color:var(--book);color:var(--book)}
+footer{border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>KEC 분기회로 계산서<span class="badge">테스트 버전</span></h1>
+  <p class="sub">서적판(기술지침 절차 재현)과 실무판(단순화)으로 같은 부하를 계산하고 결과를 서로 검증합니다.</p>
+
+  <div id="welcome" hidden>
+    <p><b>처음 오셨나요?</b> 아래 <b>“30초 체험”</b> 버튼 하나만 누르면 됩니다. 열리는 화면의 <b>결과 요약</b> 카드가 계산 결과입니다.</p>
+    <button id="welcome-close" type="button">알겠어요</button>
+  </div>
+
+  <section class="try">
+    <h2>30초 체험</h2>
+    <p>전동기 45kW, 3상 380V, Y-Δ 기동 예제(M3)가 입력된 상태로 열립니다. 아무것도 입력하지 않아도 결과가 나와 있습니다.</p>
+    <a class="btn" href="m3.html">M3 예제 열어 보기</a>
+    <small>열린 화면에서 값을 바꿔 보다가 처음 상태가 필요하면 <b>PDF 예시값 복원</b> 버튼을 누르세요.</small>
+  </section>
+
+  <h2 class="sec">내 부하로 계산하는 순서</h2>
+  <ol class="steps">
+    <li data-n="1"><b>부하 조건을 넣고 계산서 찾기</b><span>부하 종류, 전압, 용량, 기동방식을 고르면 맞는 계산서를 추천합니다.</span><a href="finder/index.html">INDEX 열기 →</a></li>
+    <li data-n="2"><b>같은 조건을 실무판에도 입력</b><span>3개 탭(공통 조건, 비전동기, 전동기). 공통 조건 탭의 전원·변압기 값을 먼저 맞춥니다.</span><a href="practical/index.html">실무판 열기 →</a></li>
+    <li data-n="3"><b>두 결과를 나란히 놓고 판정</b><span>설계전류, 차단기 정격, 케이블 굵기, 보호협조 네 가지를 비교합니다.</span><a href="guide.html#judge">판정표 보기 →</a></li>
+  </ol>
+
+  <h2 class="sec">검증 예제 3건 (결과가 어떻게 나오는지 먼저 확인)</h2>
+  <div class="cases">
+    <div class="case"><b>G2 비전동기 20kVA</b><span>두 계산서 결과가 일치하는 예</span><a href="g2.html">서적판 G2 →</a></div>
+    <div class="case"><b>M2 전동기 22kW</b><span>굵기가 달라지는 예 (16㎟ 대 25㎟)</span><a href="m2.html">서적판 M2 →</a></div>
+    <div class="case"><b>M3 전동기 45kW Y-Δ</b><span>1차/2차 이중배선, 일치하는 예</span><a href="m3.html">서적판 M3 →</a></div>
+  </div>
+  <p style="margin:-14px 0 26px;color:var(--muted);font-size:14px">실무판에 같은 값을 넣는 방법과 결과 비교표는 사용 가이드에 있습니다.</p>
+
+  <h2 class="sec">전체 서적판 12종</h2>
+  <div class="chips">
+    <a href="g1.html">G1</a><a href="g2.html">G2</a><a href="g3.html">G3</a><a href="g4.html">G4</a><a href="g5.html">G5</a>
+    <a href="m1.html">M1</a><a href="m2.html">M2</a><a href="m3.html">M3</a><a href="m4.html">M4</a><a href="m5.html">M5</a><a href="m6.html">M6</a><a href="m7.html">M7</a>
+  </div>
+
+  <p><a class="btn book" href="guide.html">사용 가이드 전체 보기</a></p>
+
+  <footer>
+    테스트 버전입니다. 설계 제출 전에는 근거 문서(감전 및 과전류보호 설계방법에 관한 기술지침 KECG 1702-2019)와 대조해 확인하세요.
+    산출근거의 수식 표시는 인터넷 연결이 필요합니다.
+  </footer>
+</div>
+<script>
+(function(){
+  var KEY='kec-welcome-seen',box=document.getElementById('welcome'),seen=false;
+  try{seen=localStorage.getItem(KEY)==='1'}catch(e){}
+  if(!seen)box.hidden=false;
+  document.getElementById('welcome-close').addEventListener('click',function(){
+    box.hidden=true;try{localStorage.setItem(KEY,'1')}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>

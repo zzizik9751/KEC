@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>KEC M7 전동기 3상 분기회로 (Soft Start · 병렬 · ACB)</title>
+<script src="kec_data.js"></script>
+<script src="print_engine.js"></script>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<style>
+  :root{--bg:#f7f8fa;--card:#fff;--bd:#d9dde3;--accent:#1f6feb;--th:#eef2f7;--muted:#6b7280;--ok:#067647;--warn:#b54708}
+  *{box-sizing:border-box}
+  body{margin:0;padding:18px;font-family:"Pretendard","Malgun Gothic",sans-serif;background:var(--bg);color:#1f2937;font-size:14px;line-height:1.55}
+  h1{font-size:20px;margin:0 0 4px}
+  h2{font-size:15px;margin:18px 0 8px;padding:6px 10px;background:#1f2937;color:#fff;border-radius:4px}
+  h3{font-size:13px;margin:14px 0 6px;color:var(--accent);border-left:3px solid var(--accent);padding-left:8px}
+  .sub{color:var(--muted);font-size:12px}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:14px;margin-bottom:12px}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin:4px 0}
+  th,td{border:1px solid var(--bd);padding:4px 6px;text-align:center}
+  th{background:var(--th)}
+  .input-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 12px}
+  .input-grid label{display:block;font-size:12px;color:#374151;white-space:nowrap;min-width:0;overflow:hidden}
+  .input-grid input, .input-grid select{margin-top:3px;padding:5px 7px;border:1px solid var(--bd);border-radius:3px;font-size:13px;box-sizing:border-box}
+  .input-grid label > input, .input-grid label > select{display:block;width:100%}
+  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:6px}
+  .summary .box{background:#eef6ff;border:1px solid #b6d4fe;border-radius:6px;padding:10px;text-align:center}
+  .summary .box .v{font-size:16px;font-weight:bold;color:#1f6feb}
+  .summary .box .l{font-size:11px;color:#374151;margin-bottom:4px}
+  .pass{color:var(--ok);font-weight:bold}
+  .fail{color:var(--warn);font-weight:bold}
+  .btn{background:#1f6feb;color:#fff;border:0;padding:8px 14px;border-radius:5px;cursor:pointer;font-size:13px;margin:4px 4px 0 0}
+  .btn.gray{background:#6b7280}
+  .btn.green{background:#059669}
+  .basis{display:none;background:#fffefa;border:2px solid #f0c419;border-radius:8px;padding:18px;margin-top:14px}
+  .basis.show{display:block}
+  .ref{display:inline-block;background:#fff4d6;color:#7a5c00;border:1px solid #f0c419;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:6px}
+  .judge-ok{color:#067647;font-weight:bold}
+  .judge-no{color:#b54708;font-weight:bold}
+  .note{background:#eef2f7;border-left:3px solid var(--accent);padding:6px 10px;font-size:12px;margin:6px 0}
+  @media print{
+    body{padding:0;background:#fff;font-size:11px}
+    .no-print{display:none !important}
+    .main-only{display:none !important}
+    .basis{display:block !important;border:1px solid #999;page-break-inside:avoid}
+    @page{size:A4;margin:14mm}
+  }
+</style>
+</head>
+<body>
+
+<div class="card main-only">
+  <h1>KEC M7 — 전동기 3상 분기회로 (Inverter · HFCO 병렬 · ACB)</h1>
+  <div class="sub">근거: 「감전 및 과전류보호 설계방법에 관한 기술지침(KECG 1702-2019)」 부록 5.1.13 / KEC 212·232</div>
+  <div class="sub" style="margin-top:4px">고정 조건: 3상 3선 380V, Inverter 기동, 병렬도체 2, ACB, 간선 BUS DUCT, 보호도체 TFR-GV. 케이블은 보호협조뿐 아니라 운전 전압강하 기준으로도 자동 상향 조정합니다.</div>
+</div>
+
+<div class="card main-only">
+  <h2>입력</h2>
+  <h3>전동기 부하 조건</h3>
+  <div class="input-grid">
+    <label>전동기 정격출력 P (kW)<input id="P" type="number" step="0.1" value="440" oninput="calc()"></label>
+    <label>전압 V (V, 선간)<input id="V" type="number" step="1" value="380" oninput="calc()"></label>
+    <label>효율 η<input id="eff" type="number" step="0.01" min="0" max="1" value="0.95" oninput="calc()"></label>
+    <label>역률 cosθ<input id="cos" type="number" step="0.01" min="0" max="1" value="0.86" oninput="calc()"></label>
+    <label>전전압 기동배율 β <span class="sub">(보수 4기준)</span><input id="beta" type="number" step="0.1" value="6.0" oninput="calc()"></label>
+    <label>기동시간 t<sub>m</sub> (s)<input id="tm" type="number" step="0.5" value="3.0" oninput="calc()"></label>
+    <label>기동시 역률 cosθ<sub>s</sub><input id="cosS" type="number" step="0.01" min="0" max="1" value="0.30" oninput="calc()"></label>
+    <label>Inverter 전류제한 λ <span class="sub">(1.2=120%)</span><input id="lambda" type="number" step="0.1" value="1.2" oninput="calc()"></label>
+  </div>
+  <h3>분기회로 배선 조건</h3>
+  <div class="input-grid">
+    <label>케이블 종류
+      <select id="cable" onchange="calc()">
+        <option selected>HFCO</option><option>F-CV</option><option>TFR-CV</option><option>F-FR-8</option>
+      </select></label>
+    <label>공사방법
+      <select id="wiring" onchange="calc()">
+        <option>F1</option><option selected>F2</option><option>C</option><option>B1</option>
+      </select></label>
+    <label>선도체 배열
+      <select id="arr" onchange="calc()"><option selected>평면</option><option>삼각</option></select></label>
+    <label>배선 길이 L (m)<input id="L" type="number" step="1" value="98" oninput="calc()"></label>
+    <label>주위온도 (°C)
+      <select id="Ta" onchange="calc()">
+        <option>10</option><option>15</option><option>20</option><option>25</option>
+        <option>30</option><option>35</option><option selected>40</option>
+        <option>45</option><option>50</option><option>55</option><option>60</option>
+      </select></label>
+    <label>회선수 (그룹)
+      <select id="Nc" onchange="calc()">
+        <option selected>1</option><option>2</option><option>3</option><option>4</option>
+        <option>5</option><option>6</option><option>7</option><option>8</option><option>9</option>
+      </select></label>
+    <label>병렬도체 수
+      <select id="Np" onchange="calc()">
+        <option>1</option><option selected>2</option><option>3</option><option>4</option>
+      </select></label>
+    <label>운전 허용전압강하 (%)<input id="emax" type="number" step="0.1" value="3.0" oninput="calc()"></label>
+  </div>
+  <h3>보호장치 / 전원 / 변압기 / 간선</h3>
+  <div class="input-grid">
+    <label>기동 허용전압강하 (%)<input id="emaxSt" type="number" step="0.1" value="13.0" oninput="calc()"></label>
+    <label>돌입배율 k<sub>rush</sub><input id="krush" type="number" step="0.1" value="1.0" oninput="calc()"></label>
+    <label>규약동작배율 γ <span class="sub">(곡선)</span><input id="gamma" type="number" step="0.05" value="8.375" oninput="calc()"></label>
+    <label>순시차단배율 δ <span class="sub">(ACB)</span><input id="delta" type="number" step="0.5" value="10" oninput="calc()"></label>
+    <label><span style="white-space:nowrap">전원 단락용량 P<sub>s</sub> (MVA)</span><input id="Ps" type="number" step="1" value="300" oninput="calc()"></label>
+    <label>전원 X/R<input id="XR_s" type="number" step="0.1" value="10" oninput="calc()"></label>
+    <label><span style="white-space:nowrap">변압기 용량 P<sub>t</sub> (kVA)</span><input id="Pt" type="number" step="10" value="2000" oninput="calc()"></label>
+    <label>변압기 %Z<input id="pZ" type="number" step="0.1" value="7.0" oninput="calc()"></label>
+    <label>변압기 X/R<input id="XR_t" type="number" step="0.01" value="7.29" oninput="calc()"></label>
+    <label>간선 종류
+      <select id="cF" onchange="calc()">
+        <option selected>BD-CU</option><option>HFCO</option><option>F-CV</option><option>F-FR-8</option>
+      </select></label>
+    <label>간선 정격/단면적
+      <select id="SF" onchange="calc()">
+        <option>1000</option><option>1600</option><option>2000</option><option>2500</option>
+        <option>3200</option><option selected>4000</option><option>5000</option><option>6300</option>
+      </select></label>
+    <label>간선 배열 / 길이 L<sub>F</sub>
+      <span style="display:flex;gap:4px;margin-top:3px">
+        <select id="arrF" onchange="calc()" style="flex:1"><option selected>평면</option><option>삼각</option></select>
+        <input id="LF" type="number" step="1" value="50" oninput="calc()" style="flex:1">
+      </span></label>
+  </div>
+  <div style="margin-top:12px" class="no-print">
+    <button class="btn" onclick="toggleBasis()" id="basisBtn">산출근거 확인 ▼</button>
+    <button class="btn" style="background:#7c3aed" onclick="previewBasis()">출력 미리보기</button>
+    <button class="btn green" onclick="printBasis()">산출근거 인쇄 / PDF 저장</button>
+    <button class="btn gray" onclick="resetDefault()">PDF 예시값 복원</button>
+  </div>
+</div>
+
+<div class="card main-only">
+  <h2>결과 요약</h2>
+  <div class="summary">
+    <div class="box"><div class="l">설계전류 I<sub>B</sub></div><div class="v" id="R_IB">-</div></div>
+    <div class="box"><div class="l">기동전류 I<sub>ms</sub></div><div class="v" id="R_Ist">-</div></div>
+    <div class="box"><div class="l">선도체 단면적</div><div class="v" id="R_S">-</div></div>
+    <div class="box"><div class="l">ACB 정격전류 I<sub>n</sub></div><div class="v" id="R_In">-</div></div>
+    <div class="box"><div class="l">ACB 정격차단전류 I<sub>cu</sub></div><div class="v" id="R_Icu">-</div></div>
+    <div class="box"><div class="l">운전 전압강하 e</div><div class="v" id="R_e">-</div></div>
+    <div class="box"><div class="l">기동 전압강하 e<sub>st</sub></div><div class="v" id="R_eSt">-</div></div>
+    <div class="box"><div class="l">최대 단락전류 (F1)</div><div class="v" id="R_IF1max">-</div></div>
+    <div class="box"><div class="l">최소 단락전류 (F2)</div><div class="v" id="R_IF2min">-</div></div>
+    <div class="box"><div class="l">보호도체 (PE)</div><div class="v" id="R_SPE">-</div></div>
+  </div>
+  <div style="margin-top:10px" id="R_judge"></div>
+</div>
+
+<div class="basis" id="basis">
+  <div class="kec-skip-print" style="background:#7a5c00;color:#fff;padding:8px 12px;border-radius:5px;margin-bottom:12px;text-align:center">
+    <b>KEC M7 산출근거 — 전동기 3상 분기회로 (Inverter · HFCO 병렬 · ACB)</b><br>
+    <span style="font-size:11px">근거: 「감전 및 과전류보호 설계방법에 관한 기술지침(KECG 1702-2019)」 부록 5.1.13 / KEC 212·232</span>
+  </div>
+  <h3>1. 입력 조건<span class="ref">5.1.13 - 1</span></h3>
+  <div id="B_inputs"></div>
+  <h3>2. 설계전류 / 기동전류 산정<span class="ref">5.1.13 - 2.가</span></h3>
+  <div>Inverter는 기동시 전류를 정격전류의 λ배(예: 1.2배)로 제한한다.
+    $$ I_B=\frac{P}{\sqrt3\cdot V\cdot\eta\cdot\cos\theta},\ \ I_{ms}=I_B\cdot\lambda,\ \ I_{rush}=I_B\cdot\lambda\cdot k_{rush} $$
+    4기준·과부하 보호장치 산정에는 보수적으로 전전압 기동배율 $\beta$를 적용한다.</div>
+  <div id="B_IB"></div>
+  <h3>3. 도체 허용전류 보정<span class="ref">표 5-33, 5-35, 5-36</span></h3>
+  <div>$$ K_{total}=K_{ta}\cdot K_{group}\cdot K_{parallel},\ \ I_z=I_{z,30°C}\times K_{total}\times n $$ (n=병렬도체 수)</div>
+  <div id="B_Iz"></div>
+  <h3>4. 단면적 선정 (4기준 + 보호협조·운전 전압강하 조정)<span class="ref">5.1.13 - 2 / 6 / 7</span></h3>
+  <div>(1) 설계전류 기준 / (2) 과부하 기준 / (3) 전압강하 단순식 $S_v=\dfrac{K_w\cdot I_B\cdot L}{1000\cdot V\cdot e\cdot n}$ / (4) 기동온도 $S_{st}=\dfrac{I_B\cdot\beta\cdot\sqrt{t_m}}{K\cdot n}\cdot a$<br>
+       조정: $I_n\le I_z$ 또는 실제 전압강하 $e>e_{max}$이면 다음 표준값으로 상향 (HFCO 병렬도체는 표 5-5 적용)</div>
+  <div id="B_S"></div>
+  <h3>5. 단락전류 계산<span class="ref">5.1.13 - 3 / IEC 60909</span></h3>
+  <div>간선이 BUS DUCT인 경우 표 5-17 적용, 분기회로 병렬도체는 표 5-5 적용.
+    $$ I_F=\frac{K_{asym}\cdot C\cdot V/\sqrt3}{\sqrt{R_{tot}^2+X_{tot}^2}}\times10^3 $$</div>
+  <div id="B_Isc"></div>
+  <h3>6. 과부하 보호장치 선정<span class="ref">5.1.13 - 4 / KEC 212.4</span></h3>
+  <div>(1) 설계전류 $I_B\le I_n$ / (2) $I_2\le1.45\,I_z$ / (3) 기동 $I_n\ge\dfrac{I_B\cdot\beta}{\gamma}$ → 큰 정격을 ACB에서 선정</div>
+  <div id="B_over"></div>
+  <h3>7. 단락 보호장치 선정<span class="ref">5.1.13 - 5 / KEC 212.3.5</span></h3>
+  <div>(1) 단시간 내열: $t_z=\left(\dfrac{S\cdot n\cdot K}{I_{F2,min}}\right)^2$, $t_n<t_z$<br>
+       (2) Inverter 돌입: $I_{rush}=I_B\cdot\lambda\cdot k_{rush}$, &nbsp;$I_n\ge\dfrac{I_{rush}\cdot a}{\delta}$<br>
+       <b>차단전류:</b> $I_{cu}\ge1.25\,I_{F1,max}$</div>
+  <div id="B_short"></div>
+  <h3>8. 운전시 전압강하 평가<span class="ref">5.1.13 - 7.가</span></h3>
+  <div>$$ e(\%)=\frac{\sqrt3\cdot I_B\cdot L\cdot(R\cos\theta+X\sin\theta)}{V}\times100 $$ (단면적은 운전 강하가 $e_{max}$ 이하가 되도록 자동 조정됨)</div>
+  <div id="B_e"></div>
+  <h3>9. 기동시 전압강하 평가<span class="ref">5.1.13 - 7.나</span></h3>
+  <div>$$ e_{st}(\%)=\frac{\sqrt3\cdot I_{ms}\cdot L\cdot(R\cos\theta_s+X\sin\theta_s)}{V}\times100 $$</div>
+  <div id="B_eSt"></div>
+  <h3>10. 보호도체(PE) 단면적<span class="ref">KEC 142.3-1</span></h3>
+  <div>병렬도체 회로는 등가 단면적 $S\cdot n$에 표 142.3-1을 적용한다.</div>
+  <div id="B_PE"></div>
+  <h3>11. 최종 결과</h3>
+  <div id="B_final"></div>
+</div>
+
+<script>
+const D = window.KEC_DATA;
+const $ = id => document.getElementById(id);
+const fmt = (n,d=2) => Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const SIZES = D.STANDARD_SIZES;
+
+// 표 5-5 HFCO 단심 3상 2병렬 R/X (Ω/km)
+const HFCO_2P = {
+  1.5:[7.7144,0.1661], 2.5:[4.7243,0.1573], 4:[2.9391,0.1528], 6:[1.9637,0.1452],
+  10:[1.1668,0.1393], 16:[0.7332,0.1373], 25:[0.4636,0.1350], 35:[0.3342,0.1319],
+  50:[0.2469,0.1285], 70:[0.1712,0.1260], 95:[0.1235,0.1245], 120:[0.0981,0.1236],
+  150:[0.0797,0.1229], 185:[0.0640,0.1223], 240:[0.0492,0.1213], 300:[0.0398,0.1196],
+  400:[0.0317,0.1196], 500:[0.0256,0.1180], 630:[0.0207,0.1177]
+};
+// 표 5-17 BUS DUCT (CU) 임피던스 (Ω/km), 정격전류별
+const BUS_DUCT_CU = {
+  1000:[0.0481,0.0163], 1600:[0.0301,0.0107], 2000:[0.0241,0.0090],
+  2500:[0.0192,0.0080], 3200:[0.0150,0.0072], 4000:[0.0120,0.0067],
+  5000:[0.0096,0.0061], 6300:[0.0076,0.0057]
+};
+
+const CFG = {
+  typeId:'M7',
+  protType:'ACB', protName:'산업용 ACB', peName:'TFR-GV',
+  K_short:143, a_margin:1.25, Kw:30.8,
+  defaults:{P:440,V:380,eff:0.95,cos:0.86,beta:6.0,tm:3.0,cosS:0.30,lambda:1.2,
+            cable:'HFCO',wiring:'F2',arr:'평면',L:98,
+            Ta:'40',Nc:'1',Np:'2',emax:3.0,emaxSt:13.0,krush:1.0,gamma:8.375,delta:10,
+            Ps:300,XR_s:10,Pt:2000,pZ:7.0,XR_t:7.29,
+            cF:'BD-CU',SF:'4000',arrF:'평면',LF:50}
+};
+const LG = {A1:'A1-1',B1:'B1-1',B2:'B2-1',C:'C-2',E:'E-4',F1:'F1-4',F2:'F2-4',D2:'D2-1'};
+function izCol(wiring, arr){
+  if (wiring==='F1') return 'F삼각';
+  if (wiring==='F2') return 'F평면';
+  if (wiring==='G')  return arr==='평면'?'G평면':'G삼각';
+  return wiring;
+}
+function singleRxKey(cable, arr){
+  if (cable==='HFCO') return arr==='삼각'?'HFCO_3ph_삼각':'HFCO_3ph_평면';
+  return D.helpers.cableKey(cable, 3, 1, arr);
+}
+// 병렬도체 R/X 조회 — 표 5-5(HFCO) / 표 5-8(F-FR-8) 우선, 없으면 단심 R/Np 근사
+function getRX(cable, S, arr, np){
+  if (np<=1) return D.CABLE_RX[singleRxKey(cable,arr)][S];
+  if (cable==='HFCO' && np===2) return HFCO_2P[S];
+  if ((cable==='F-FR-8'||cable==='TFR-8'||cable==='NFR-8') && np===2) return D.CABLE_RX['F-FR-8_3ph_2P'][S];
+  const s=D.CABLE_RX[singleRxKey(cable,arr)][S];
+  return [s[0]/np, s[1]];  // 근사: R=병렬, X=단심
+}
+
+function computeM7(p){
+  const sq3=Math.sqrt(3);
+  const sinT=Math.sqrt(Math.max(0,1-p.cos*p.cos));
+  const sinS=Math.sqrt(Math.max(0,1-p.cosS*p.cosS));
+  const al=D.CONDUCTOR.alpha;
+  const Oa=1/(1+al*70), Ob=(1+al*230)*Oa;
+  const Cmax=D.VOLTAGE_FACTOR.Cmax, Cmin=D.VOLTAGE_FACTOR.Cmin;
+  const Ks=CFG.K_short, aM=CFG.a_margin;
+
+  // 1. 설계전류·기동전류
+  const IB=p.P/(sq3*p.V/1000*p.eff*p.cos);
+  const Ims=IB*p.lambda;
+  const Iinrush=IB*p.lambda*p.krush;
+
+  // 2. 보정·허용전류
+  const Ka=D.AMBIENT_TEMP.XLPE[p.Ta] ?? 1;
+  const grp=D.GROUP_REDUCTION[LG[p.wiring]] || [];
+  const Kg=grp[p.Nc-1] ?? 1;
+  const Kp=p.Np>1 ? (grp[p.Np-1] ?? 1) : 1;
+  const Ktot=Ka*Kg*Kp;
+  const base=D.ALLOWABLE_CURRENT.XLPE['3ph_1C'][izCol(p.wiring,p.arr)] || {};
+  const iz={}; for (const s of SIZES) if (base[s]) iz[s]=base[s]*Ktot*p.Np;
+  const selSize=(t,req)=>{ for(const s of SIZES) if(t[s]&&t[s]>=req) return s; return SIZES.at(-1); };
+  const calcSize=req=>{ for(const s of SIZES) if(s>=req) return s; return SIZES.at(-1); };
+
+  // 3. 4기준 단면적
+  const In_design=D.helpers.nextIn('ACB', IB);
+  const Sd=Math.max(selSize(iz,IB),2.5);
+  const So=Math.max(selSize(iz,In_design),2.5);
+  const Sv=CFG.Kw*IB*p.L/(1000*p.V*p.emax/100*p.Np);
+  const Svs=calcSize(Sv);
+  const Sst=IB*p.beta*Math.sqrt(p.tm)/(Ks*p.Np)*aM;
+  const Sts=calcSize(Sst);
+  const Sbase=Math.max(Sd,So,Svs,Sts,2.5);
+
+  // 4. 과부하 보호장치
+  const In_start=D.helpers.nextIn('ACB', IB*p.lambda/p.gamma);  // M7(Inverter): 실제 λ 사용
+  const In_overload=Math.max(In_design, In_start);
+
+  // 5. 단면적 조정 — 보호협조 + 운전 전압강하
+  function eRunAt(S){
+    if (!iz[S]) return Infinity;
+    const rx=getRX(p.cable,S,p.arr,p.Np);
+    return sq3*IB*(p.L/1000)*(rx[0]*p.cos+rx[1]*sinT)/p.V*100;
+  }
+  let Sfin=Sbase; const steps=[Sbase];
+  let safety=0;
+  while (safety++<20){
+    const okCoord = iz[Sfin] && iz[Sfin]>=In_overload;
+    const okDrop  = eRunAt(Sfin)<=p.emax;
+    if (okCoord && okDrop) break;
+    const nx=calcSize(Sfin+0.01);
+    if (nx===Sfin) break;
+    Sfin=nx; steps.push(Sfin);
+  }
+  const Iz_fin=iz[Sfin] ?? 0;
+
+  // 6. 단락전류
+  const Zs=(p.V/1000)**2/p.Ps*1000;
+  const Rs=Zs/Math.sqrt(1+p.XRs**2), Xs=Zs/Math.sqrt(1+1/p.XRs**2);
+  const Zt=p.pZ/100*(p.V/1000)**2/p.Pt*1e6;
+  const Xt=Zt/Math.sqrt(1+1/p.XRt**2);
+  const xt_pu=Xt*p.Pt/(p.V*p.V);
+  const KT=0.95*Cmax/(1+0.6*xt_pu);
+  const ZT=KT*Zt, RT=ZT/Math.sqrt(1+p.XRt**2), XT=ZT/Math.sqrt(1+1/p.XRt**2);
+  // 간선 (BUS DUCT 또는 케이블)
+  let R0F,X0F,fLabel;
+  if (p.cF==='BD-CU'){
+    const t=BUS_DUCT_CU[p.SF] || BUS_DUCT_CU[4000];
+    R0F=t[0]; X0F=t[1]; fLabel=`CU-BD ${p.SF}A`;
+  } else {
+    const k=singleRxKey(p.cF,p.arrF);
+    const t=D.CABLE_RX[k][p.SF] || D.CABLE_RX[k][300];
+    R0F=t[0]; X0F=t[1]; fLabel=`${p.cF} ${p.SF}㎟`;
+  }
+  const RFn=R0F*p.LF*Oa, RFm=R0F*p.LF*Ob, XF=X0F*p.LF;
+  // 분기 (병렬도체)
+  const rxB=getRX(p.cable,Sfin,p.arr,p.Np);
+  const RBn=rxB[0]*p.L*Oa, RBm=rxB[0]*p.L*Ob, XB=rxB[1]*p.L;
+  const asym=(R,X)=>Math.sqrt(1+2*Math.exp(-2*Math.PI*R/X));
+  const SR1n=Rs+RT+RFn, SX1=Xs+XT+XF, SR1m=Rs+RT+RFm;
+  const IF1max=asym(SR1n,SX1)*Cmax*(p.V/sq3)/Math.sqrt(SR1n**2+SX1**2)*1000;
+  const IF1min=Cmin*(p.V/sq3)/Math.sqrt(SR1m**2+SX1**2)*1000;
+  const SR2n=Rs+RT+RFn+RBn, SX2=Xs+XT+XF+XB, SR2m=Rs+RT+RFm+RBm;
+  const IF2max=asym(SR2n,SX2)*Cmax*(p.V/sq3)/Math.sqrt(SR2n**2+SX2**2)*1000;
+  const IF2min=Cmin*(p.V/sq3)/Math.sqrt(SR2m**2+SX2**2)*1000;
+
+  // 7. 단락 보호장치
+  const tz=(Sfin*p.Np*Ks/IF2min)**2;
+  const tn=0.1;
+  const In_inrush=D.helpers.nextIn('ACB', Iinrush*aM/p.delta);
+  const In=Math.max(In_overload, In_inrush);
+  const Icu=D.helpers.nextIcu('ACB', IF1max*1.25/1000);
+
+  // 8. 전압강하
+  const e_run=sq3*IB*(p.L/1000)*(rxB[0]*p.cos+rxB[1]*sinT)/p.V*100;
+  const e_st=sq3*Ims*(p.L/1000)*(rxB[0]*p.cosS+rxB[1]*sinS)/p.V*100;
+
+  // 9. PE (병렬도체 등가 S·n)
+  const effS=Sfin*p.Np;
+  const SPEt=effS<=16?effS:(effS<=35?16:effS/2);
+  const SPE=calcSize(SPEt);
+
+  // 판정
+  const ok_coord=IB<=In && In<=Iz_fin;
+  const I2=1.37*In, Iz145=1.45*Iz_fin;
+  const ok_I2=I2<=Iz145;
+  const ok_e=e_run<=p.emax, ok_eSt=e_st<=p.emaxSt;
+  const ok_tn=tn<tz;
+
+  return {IB,Ims,Iinrush,Ka,Kg,Kp,Ktot,iz,Sd,So,Svs,Sts,Sv,Sst,Sbase,Sfin,steps,Iz_fin,
+    In_design,In_start,In_overload,In,In_inrush,Icu,
+    Zs,Rs,Xs,Zt,Xt,KT,ZT,RT,XT,Oa,Ob,R0F,X0F,RFn,RFm,XF,fLabel,rxB,RBn,RBm,XB,
+    IF1max,IF1min,IF2max,IF2min,tz,tn,e_run,e_st,SPE,effS,I2,Iz145,
+    ok_coord,ok_I2,ok_e,ok_eSt,ok_tn};
+}
+
+function readInputs(){
+  return {
+    P:+$('P').value, V:+$('V').value, eff:+$('eff').value, cos:+$('cos').value,
+    beta:+$('beta').value, tm:+$('tm').value, cosS:+$('cosS').value, lambda:+$('lambda').value,
+    cable:$('cable').value, wiring:$('wiring').value, arr:$('arr').value, L:+$('L').value,
+    Ta:+$('Ta').value, Nc:+$('Nc').value, Np:+$('Np').value,
+    emax:+$('emax').value, emaxSt:+$('emaxSt').value, krush:+$('krush').value,
+    gamma:+$('gamma').value, delta:+$('delta').value,
+    Ps:+$('Ps').value, XRs:+$('XR_s').value, Pt:+$('Pt').value, pZ:+$('pZ').value, XRt:+$('XR_t').value,
+    cF:$('cF').value, SF:+$('SF').value, arrF:$('arrF').value, LF:+$('LF').value
+  };
+}
+
+function calc(){
+  const p=readInputs();
+  const r=computeM7(p);
+
+  $('R_IB').textContent=fmt(r.IB,2)+' A';
+  $('R_Ist').textContent=fmt(r.Ims,0)+' A';
+  $('R_S').textContent=`${p.cable} ${r.Sfin}㎟×${p.Np}병렬`;
+  $('R_In').textContent=r.In+' A';
+  $('R_Icu').textContent=r.Icu+' kA';
+  $('R_e').textContent=fmt(r.e_run,2)+' %';
+  $('R_eSt').textContent=fmt(r.e_st,2)+' %';
+  $('R_IF1max').textContent=fmt(r.IF1max,0)+' A';
+  $('R_IF2min').textContent=fmt(r.IF2min,0)+' A';
+  $('R_SPE').textContent=`${CFG.peName} ${r.SPE}㎟`;
+  $('R_judge').innerHTML=
+    `보호협조: I<sub>B</sub>(${fmt(r.IB,1)})≤I<sub>n</sub>(${r.In})≤I<sub>z</sub>(${fmt(r.Iz_fin,1)}) — `+
+    `<span class="${r.ok_coord?'pass':'fail'}">${r.ok_coord?'적정':'부적정'}</span>`+
+    ` / I₂≤1.45Iz: <span class="${r.ok_I2?'pass':'fail'}">${r.ok_I2?'적정':'부적정'}</span>`+
+    ` / 운전강하: <span class="${r.ok_e?'pass':'fail'}">${r.ok_e?'적정':'부적정'}</span>`+
+    ` / 기동강하: <span class="${r.ok_eSt?'pass':'fail'}">${r.ok_eSt?'적정':'부적정'}</span>`+
+    ` / 단락보호: <span class="${r.ok_tn?'pass':'fail'}">${r.ok_tn?'적정':'부적정(곡선 확인)'}</span>`;
+
+  $('B_inputs').innerHTML=`<table>
+    <tr><th colspan="4">전동기 부하</th></tr>
+    <tr><td>전기방식 / 전압</td><td>3상 3선 / ${p.V} V</td><td>정격출력 P</td><td>${p.P} kW</td></tr>
+    <tr><td>효율 η / 역률 cosθ</td><td>${p.eff} / ${p.cos}</td><td>기동방식</td><td>Inverter (λ=${p.lambda})</td></tr>
+    <tr><td>전전압 β / 기동시간</td><td>${p.beta} / ${p.tm} s</td><td>기동시 역률 / 돌입 k</td><td>${p.cosS} / ${p.krush}</td></tr>
+    <tr><th colspan="4">분기회로 배선</th></tr>
+    <tr><td>케이블</td><td>${p.cable} 1C×${p.Np}병렬 / ${p.wiring} ${p.arr}</td><td>길이 L</td><td>${p.L} m</td></tr>
+    <tr><td>주위온도 / 회선수</td><td>${p.Ta} °C / ${p.Nc}</td><td>병렬도체 / 보호장치</td><td>${p.Np} / ${CFG.protName}</td></tr>
+    <tr><td>운전 허용강하 / 기동 허용강하</td><td>${p.emax} % / ${p.emaxSt} %</td><td>보호도체</td><td>${CFG.peName}</td></tr>
+    <tr><th colspan="4">전원 / 변압기 / 간선</th></tr>
+    <tr><td>전원 단락용량 / X/R</td><td>${p.Ps} MVA / ${p.XRs}</td><td>변압기 용량</td><td>${p.Pt} kVA</td></tr>
+    <tr><td>변압기 %Z / X/R</td><td>${p.pZ} % / ${p.XRt}</td><td>간선</td><td>${r.fLabel} (${p.arrF}, ${p.LF}m)</td></tr>
+  </table>`;
+
+  $('B_IB').innerHTML=
+    `$$ I_B=\\frac{${p.P}}{\\sqrt3\\times${p.V/1000}\\times${p.eff}\\times${p.cos}}=${fmt(r.IB,2)}\\text{ A}$$
+     $$ I_{ms}=I_B\\cdot\\lambda=${fmt(r.IB,2)}\\times${p.lambda}=${fmt(r.Ims,1)}\\text{ A},\\quad
+        I_{rush}=I_B\\cdot\\lambda\\cdot k=${fmt(r.Iinrush,1)}\\text{ A} $$`;
+
+  let izRows='';
+  SIZES.filter(s=>r.iz[s] && s>=150 && s<=630).forEach(s=>{
+    izRows+=`<tr><td>${s}×${p.Np}</td><td>${fmt(r.iz[s]/r.Ktot/p.Np,0)}</td><td>×${fmt(r.Ktot,3)}×${p.Np}</td><td><b>${fmt(r.iz[s],1)}</b></td></tr>`;
+  });
+  $('B_Iz').innerHTML=
+    `$$ K_{total}=${fmt(r.Ka,2)}\\times${fmt(r.Kg,2)}\\times${fmt(r.Kp,2)}=${fmt(r.Ktot,3)} $$
+     <table><thead><tr><th>S(㎟)×n</th><th>I<sub>z,30°C</sub> 단심</th><th>보정</th><th>보정 I<sub>z</sub>(A)</th></tr></thead><tbody>${izRows}</tbody></table>`;
+
+  $('B_S').innerHTML=
+    `(1) 설계전류 기준: $I_B=${fmt(r.IB,2)}$A → ${r.Sd}㎟ &nbsp;|&nbsp; (2) 과부하 In(설계전류 기준 ${r.In_design}A) → ${r.So}㎟<br>
+     (3) 전압강하 단순식: $S_v=\\dfrac{${CFG.Kw}\\times${fmt(r.IB,2)}\\times${p.L}}{1000\\times${p.V}\\times${p.emax/100}\\times${p.Np}}=${fmt(r.Sv,2)}$㎟ → ${r.Svs}㎟<br>
+     (4) 기동전류 온도상승: $S_{st}=\\dfrac{${fmt(r.IB,2)}\\times${p.beta}\\times\\sqrt{${p.tm}}}{${CFG.K_short}\\times${p.Np}}\\times${CFG.a_margin}=${fmt(r.Sst,2)}$㎟ → ${r.Sts}㎟<br>
+     <b>→ 4기준 최댓값 $S_{base}=${r.Sbase}$㎟</b>
+     <div class="note">단면적 조정 경로: ${r.steps.join(' → ')}㎟ (보호협조 $I_n$=${r.In_overload}A ≤ $I_z$, 그리고 실제 운전 강하 ≤ ${p.emax}% 동시 만족까지 상향)<br>
+       <b>→ 최종 선도체 단면적 ${p.cable} ${r.Sfin}㎟×${p.Np}병렬, $I_z$=${fmt(r.Iz_fin,1)}A</b></div>`;
+
+  $('B_Isc').innerHTML=
+    `$$Z_s=${fmt(r.Zs,4)}\\text{ mΩ},\\ R_s=${fmt(r.Rs,4)},\\ X_s=${fmt(r.Xs,4)}$$
+     $$Z_t=${fmt(r.Zt,4)},\\ K_T=${fmt(r.KT,5)},\\ Z_T=${fmt(r.ZT,4)},\\ R_T=${fmt(r.RT,4)},\\ X_T=${fmt(r.XT,4)}\\text{ mΩ}$$
+     $O_a=${fmt(r.Oa,5)},\\ O_b=${fmt(r.Ob,5)}$
+     <table><tr><th>구간</th><th>R₀</th><th>X₀</th><th>L(m)</th><th>R(20°C)</th><th>R(250°C)</th><th>X</th></tr>
+     <tr><td>간선 ${r.fLabel} ${p.arrF}</td><td>${r.R0F}</td><td>${r.X0F}</td><td>${p.LF}</td><td>${fmt(r.RFn,3)}</td><td>${fmt(r.RFm,3)}</td><td>${fmt(r.XF,3)}</td></tr>
+     <tr><td>분기 ${p.cable} ${r.Sfin}×${p.Np}병렬 ${p.arr}</td><td>${r.rxB[0]}</td><td>${r.rxB[1]}</td><td>${p.L}</td><td>${fmt(r.RBn,3)}</td><td>${fmt(r.RBm,3)}</td><td>${fmt(r.XB,3)}</td></tr></table>
+     <table><tr><th>단락점</th><th>I<sub>max</sub> (A)</th><th>I<sub>min</sub> (A)</th></tr>
+     <tr><td>F1 (간선–분기 접속점)</td><td><b>${fmt(r.IF1max,0)}</b></td><td><b>${fmt(r.IF1min,0)}</b></td></tr>
+     <tr><td>F2 (분기–부하 접속점)</td><td><b>${fmt(r.IF2max,0)}</b></td><td><b>${fmt(r.IF2min,0)}</b></td></tr></table>`;
+
+  $('B_over').innerHTML=
+    `(1) 설계전류 기준: $I_B=${fmt(r.IB,2)}$A → $I_n=${r.In_design}$A<br>
+     (3) 기동전류 기준(Inverter λ): $I_n\\ge\\dfrac{${fmt(r.IB,2)}\\times${p.lambda}}{${p.gamma}}=${fmt(r.IB*p.lambda/p.gamma,1)}$A → ${r.In_start}A<br>
+     <b>→ 과부하 보호장치 정격 $I_n=\\max(${r.In_design},${r.In_start})=${r.In_overload}$A</b><br>
+     $I_2=1.37\\times${r.In}=${fmt(r.I2,1)}$A, $\\ 1.45I_z=${fmt(r.Iz145,1)}$A → <span class="${r.ok_I2?'judge-ok':'judge-no'}">${r.ok_I2?'적정':'부적정'}</span>`;
+
+  $('B_short').innerHTML=
+    `(1) 단시간 내열: $$t_z=\\left(\\frac{${r.Sfin}\\times${p.Np}\\times${CFG.K_short}}{${fmt(r.IF2min,0)}}\\right)^2=${fmt(r.tz,2)}\\text{ s},\\quad t_n(${r.tn}\\text{s}) ${r.ok_tn?'<':'\\ge'} t_z$$
+     (2) Inverter 돌입: $I_{rush}=${fmt(r.IB,2)}\\times${p.lambda}\\times${p.krush}=${fmt(r.Iinrush,1)}$A,
+     &nbsp;$I_n\\ge\\dfrac{${fmt(r.Iinrush,1)}\\times${CFG.a_margin}}{${p.delta}}=${fmt(r.Iinrush*CFG.a_margin/p.delta,1)}$A → ${r.In_inrush}A<br>
+     <b>→ 최종 보호장치 정격 $I_n=\\max(${r.In_overload},${r.In_inrush})=${r.In}$A</b><br>
+     차단전류: $I_{cu}\\ge${fmt(r.IF1max,0)}\\times1.25=${fmt(r.IF1max*1.25/1000,2)}$kA → 표준 <b>${r.Icu} kA</b>`;
+
+  $('B_e').innerHTML=
+    `${p.cable} ${r.Sfin}㎟×${p.Np}병렬: $R=${r.rxB[0]}$, $X=${r.rxB[1]}$ Ω/km
+     $$e(\\%)=\\frac{\\sqrt3\\times${fmt(r.IB,2)}\\times${p.L/1000}\\times(${r.rxB[0]}\\times${p.cos}+${r.rxB[1]}\\times${fmt(Math.sqrt(1-p.cos**2),4)})}{${p.V}}\\times100=${fmt(r.e_run,3)}\\%$$
+     판정: $e ${r.ok_e?'\\le':'>'} ${p.emax}\\%$ — <span class="${r.ok_e?'judge-ok':'judge-no'}">${r.ok_e?'적정':'부적정'}</span>`;
+
+  $('B_eSt').innerHTML=
+    `기동전류 $I_{ms}=${fmt(r.Ims,1)}$A, 기동시 역률 $\\cos\\theta_s=${p.cosS}$
+     $$e_{st}(\\%)=\\frac{\\sqrt3\\times${fmt(r.Ims,1)}\\times${p.L/1000}\\times(${r.rxB[0]}\\times${p.cosS}+${r.rxB[1]}\\times${fmt(Math.sqrt(1-p.cosS**2),4)})}{${p.V}}\\times100=${fmt(r.e_st,3)}\\%$$
+     판정: $e_{st} ${r.ok_eSt?'\\le':'>'} ${p.emaxSt}\\%$ — <span class="${r.ok_eSt?'judge-ok':'judge-no'}">${r.ok_eSt?'적정':'부적정'}</span>`;
+
+  $('B_PE').innerHTML=`선도체 등가 단면적 $S\\cdot n=${r.Sfin}\\times${p.Np}=${r.effS}$㎟ → 표 142.3-1 → 보호도체 <b>${CFG.peName} ${r.SPE}㎟</b>`;
+
+  $('B_final').innerHTML=`<table>
+    <tr><th>항목</th><th>결과</th><th>판정</th></tr>
+    <tr><td>설계전류 I<sub>B</sub> / 기동 I<sub>ms</sub></td><td>${fmt(r.IB,2)} A / ${fmt(r.Ims,0)} A</td><td>-</td></tr>
+    <tr><td>선도체 단면적</td><td>${p.cable} ${r.Sfin}㎟×${p.Np}병렬 (I<sub>z</sub>=${fmt(r.Iz_fin,1)} A)</td><td>${r.ok_coord?'<span class="judge-ok">적정</span>':'<span class="judge-no">부적정</span>'}</td></tr>
+    <tr><td>ACB 정격전류 I<sub>n</sub></td><td>${r.In} A</td><td>-</td></tr>
+    <tr><td>ACB 정격차단전류 I<sub>cu</sub></td><td>${r.Icu} kA</td><td>-</td></tr>
+    <tr><td>운전 전압강하</td><td>${fmt(r.e_run,2)} % (허용 ${p.emax} %)</td><td>${r.ok_e?'<span class="judge-ok">적정</span>':'<span class="judge-no">부적정</span>'}</td></tr>
+    <tr><td>기동 전압강하</td><td>${fmt(r.e_st,2)} % (허용 ${p.emaxSt} %)</td><td>${r.ok_eSt?'<span class="judge-ok">적정</span>':'<span class="judge-no">부적정</span>'}</td></tr>
+    <tr><td>최대 단락전류 F1 / 최소 F2</td><td>${fmt(r.IF1max,0)} A / ${fmt(r.IF2min,0)} A</td><td>-</td></tr>
+    <tr><td>보호도체 PE</td><td>${CFG.peName} ${r.SPE}㎟</td><td>-</td></tr>
+  </table>`;
+
+  if ($('basis').classList.contains('show') && window.MathJax && MathJax.typesetPromise) {
+    MathJax.typesetPromise([$('basis')]);
+  }
+}
+
+function toggleBasis(){
+  const b=$('basis');
+  b.classList.toggle('show');
+  $('basisBtn').textContent=b.classList.contains('show')?'산출근거 숨기기 ▲':'산출근거 확인 ▼';
+  if (b.classList.contains('show') && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([b]);
+}
+function printBasis(){
+  const b=$('basis'); if(!b.classList.contains('show')) toggleBasis();
+  KECPrint.print('basis',{title:'KEC M7 산출근거',subtitle:'전동기 3상 분기회로 (Inverter · HFCO 병렬 · ACB)',footerLeft:'KECG 1702-2019 / KEC 212·232'});
+}
+function previewBasis(){
+  const b=$('basis'); if(!b.classList.contains('show')) toggleBasis();
+  KECPrint.preview('basis',{title:'KEC M7 산출근거',subtitle:'전동기 3상 분기회로 (Inverter · HFCO 병렬 · ACB)',footerLeft:'KECG 1702-2019 / KEC 212·232'});
+}
+function resetDefault(){
+  const d=CFG.defaults;
+  for (const k in d){ if($(k)) $(k).value=d[k]; }
+  calc();
+}
+
+calc();
+</script>
+</body>
+</html>
