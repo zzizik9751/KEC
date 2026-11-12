@@ -42,6 +42,7 @@ window.MathJax = {
   .ref{display:inline-block;background:#fff4d6;color:#7a5c00;border:1px solid #f0c419;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:6px}
   .judge-ok{color:#067647;font-weight:bold}
   .judge-no{color:#b54708;font-weight:bold}
+  .sel0 td{background:#e8f1ff!important}
   @media print{
     body{padding:0;background:#fff;font-size:11px}
     .no-print{display:none !important}
@@ -50,8 +51,75 @@ window.MathJax = {
     @page{size:A4;margin:14mm}
   }
 </style>
+<style id="a4-680">
+/* ===== 공통 스타일: 글꼴 · 소제목 · 흰 배경 ===== */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap');
+:root{--kfont:"Noto Sans KR","Malgun Gothic","맑은 고딕",sans-serif;--kserif:"Noto Serif KR","Malgun Gothic","맑은 고딕",serif;--bg:#fff!important}
+html,html body{background:#fff!important;font-family:var(--kfont)}
+button,input,select,textarea,th,td,nav,label{font-family:var(--kfont)}
+h1,header.top h1{font-family:var(--kserif);font-weight:700;letter-spacing:-.01em}
+h1{font-size:1.6em;padding-bottom:8px;border-bottom:3px solid #1f6feb;margin-bottom:8px}
+h2{font-size:1.2em;font-weight:700;border-left:6px solid #1f6feb;letter-spacing:-.01em}
+h3{font-size:1.18em;font-weight:700;line-height:1.4;color:#0b4fb3;
+  background:linear-gradient(90deg,#e8f1ff 0%,#f6faff 60%,#fff 100%);
+  border-left:5px solid #1f6feb;border-bottom:1px solid #cfe0fb;border-radius:0 6px 6px 0;
+  padding:7px 12px;margin:20px 0 10px}
+h3 .ref,h3 .pg,h3 .no{font-family:var(--kfont)}
+h3 .ref{display:inline-block;font-size:12.5px;font-weight:600;line-height:1.4;border-radius:999px;padding:2px 11px;margin-left:10px;vertical-align:middle}
+h3 .no{color:#1f6feb;font-weight:700}
+/* 표: 맨 왼쪽·맨 오른쪽 테두리 없음 (상하 가로선 중심) */
+table th:first-child,table td:first-child{border-left:none!important}
+table th:last-child,table td:last-child{border-right:none!important}
+.sel td{background:#fff6d6!important;font-weight:700}
+.izn{font-size:.85em;color:#6b7280;margin:2px 0 8px}
+.sh{font-size:1.05em;font-weight:700;color:#0b4fb3;margin:14px 0 4px;padding:2px 0 3px 10px;border-left:4px solid #8fb3ef;border-bottom:1px dashed #b9cff2;line-height:1.4}
+.sh.eq{color:#374151;border-left-color:#9ca3af;border-bottom-color:#d1d5db;background:#f6f7f9;margin-top:6px}
+.sh2{font-weight:700;color:#1f2937;margin:10px 0 2px;padding-left:7px;border-left:3px solid #cbd5e1}
+/* 글자 크기 (축소) */
+html body{font-size:13px!important}
+table{font-size:11px!important}
+.sub,.note,.izn{font-size:11px!important}
+h3 .ref{font-size:11.5px!important}
+@media print{
+  html body{font-size:10px!important}
+  table{font-size:9.5px!important}
+  .sub,.note,.izn{font-size:9.5px!important}
+  h3 .ref{font-size:9.5px!important}
+}
+@media print{h1,h2,h3{-webkit-print-color-adjust:exact;print-color-adjust:exact;break-after:avoid}}
+
+/* A4 출력용: 본문 한 줄 최대 폭 680px (A4 210mm - 좌우여백 14mm×2 = 182mm ≈ 688px) */
+html body{max-width:680px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:content-box!important}
+.wrap,.wrapper,.container,.layout,.flowwrap,.cmpwrap,.tabbar{max-width:680px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:content-box!important}
+.layout{display:block!important}
+nav{position:static!important;max-height:none!important;margin-bottom:12px}
+img,svg,canvas,pre,input,select,textarea{max-width:100%}
+input,select,textarea{min-width:0}
+.input-grid input,.input-grid select{display:block;width:100%;box-sizing:border-box}
+[class*="grid"]>*,.summary>*{min-width:0}
+table{max-width:100%}
+.tw,.fx,pre{overflow-x:auto}
+@media print{
+  @page{size:A4 portrait;margin:14mm}
+  html body{max-width:680px!important;margin:0 auto!important;padding:0!important}
+  table{width:100%!important;table-layout:auto;word-break:keep-all;overflow-wrap:anywhere}
+  th,td{min-width:0!important;white-space:normal!important}
+  .tw,.fx,pre{overflow:visible;white-space:pre-wrap}
+}
+</style>
+<style id="zoombar-css">
+/* 화면 전용 확대 바 (출력에는 적용 안 함) */
+#zbar{position:fixed;top:6px;right:8px;z-index:9999;display:flex;align-items:center;gap:2px;background:#1f2a44;color:#fff;border-radius:6px;padding:3px 4px;font:600 12px/1 "Noto Sans KR",sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.3);opacity:.85}
+#zbar:hover{opacity:1}
+#zbar button{background:transparent;color:#fff;border:0;border-radius:4px;padding:4px 8px;font:inherit;cursor:pointer}
+#zbar button:hover{background:rgba(255,255,255,.2)}
+#zbar button.on{background:rgba(255,255,255,.3)}
+@media print{#zbar{display:none!important} html body{zoom:1!important}}
+</style>
 </head>
 <body>
+<div id="zbar" aria-label="화면 확대"><button type="button" id="z100" title="100% (출력 기준 크기)">100%</button><button type="button" id="z150" title="150% 확대">150%</button></div>
+
 
 <div class="card main-only">
   <h1>KEC M2 — 전동기 3상 분기회로 (F-CV·B2·전전압 기동)</h1>
@@ -92,6 +160,7 @@ window.MathJax = {
       </select></label>
     <label>운전 허용전압강하 (%)<input id="emax" type="number" step="0.1" value="2.0" oninput="calc()"></label>
     <label>기동 허용전압강하 (%)<input id="emaxSt" type="number" step="0.1" value="7.0" oninput="calc()"></label>
+    <label>보호장치 최소동작시간 t<sub>min</sub> (s)<input id="tmin" type="number" step="0.5" value="9" oninput="calc()"></label>
     <label>규약동작배율 γ <span class="sub">(곡선)</span><input id="gamma" type="number" step="0.05" value="4.4" oninput="calc()"></label>
     <label>순시차단배율 δ <span class="sub">(곡선)</span><input id="delta" type="number" step="0.5" value="10" oninput="calc()"></label>
   </div>
@@ -132,6 +201,7 @@ window.MathJax = {
     <div class="box"><div class="l">최소 단락전류 (F2)</div><div class="v" id="R_IF2min">-</div></div>
     <div class="box"><div class="l">보호도체 (PE)</div><div class="v" id="R_SPE">-</div></div>
   </div>
+  <div id="R_key"></div>
   <div style="margin-top:10px" id="R_judge"></div>
 </div>
 
@@ -155,29 +225,41 @@ window.MathJax = {
   <div id="B_Iz"></div>
 
   <h3>4. 단면적 선정 (4가지 중 최댓값)<span class="ref">5.1.8 - 2.나·다·라·마</span></h3>
+  <div class="sh">4.1 설계기준 (적용 계산식)</div>
   <div>(1) 설계전류 기준 $I_z\ge I_B$ (KEC 232.19 최소 2.5㎟)<br>
        (2) 과부하장치 기준 $I_z\ge I_n$ (설계전류 기준 정격)<br>
        (3) 전압강하 단순식: $S_v=\dfrac{K_w\cdot I_B\cdot L}{1000\cdot V\cdot e}$ (3상 3선 $K_w=30.8$)<br>
        (4) <b>기동전류 온도상승</b>: $S_{st}=\dfrac{I_B\cdot\beta\cdot\sqrt{t_m}}{K\cdot n}\times a$</div>
-  <div id="B_S"></div>
+  <div id="B_S" data-flat="1"></div>
 
   <h3>5. 단락전류 계산<span class="ref">5.1.8 - 3 / IEC 60909</span></h3>
-  <div><b>전원:</b> $Z_s=\dfrac{V^2}{P_s}\times10^3$ &nbsp;
-       <b>변압기:</b> $Z_t=\dfrac{\%Z}{100}\cdot\dfrac{V^2}{P_t}\times10^6$, $K_T=\dfrac{0.95\,C_{max}}{1+0.6\,x_{T,pu}}$<br>
-       <b>도체:</b> $O_a=1/[1+\alpha\cdot70]$, $O_b=[1+\alpha\cdot230]\cdot O_a$<br>
-       <b>단락전류 (3상: F1·F2 모두 $k=\sqrt3$, 왕복계수 $\eta=1$):</b>
+  <div class="sh">5.1 계산기준 (적용 계산식, IEC 60909)</div>
+  <div style="line-height:1.9">
+    <div style="margin-top:2px"><b>(1) 전원 임피던스:</b> $Z_s=\dfrac{V^2}{P_s}\times10^3\ [\text{m}\Omega]$ ($V$[kV], $P_s$[MVA])<br>
+       $R_s=\dfrac{Z_s}{\sqrt{1+(X/R)_s^{2}}},\quad X_s=\dfrac{Z_s}{\sqrt{1+(R/X)_s^{2}}}$</div>
+    <div style="margin-top:14px"><b>(2) 변압기 임피던스:</b> $Z_t=\dfrac{\%Z}{100}\cdot\dfrac{V^2}{P_t}\times10^6\ [\text{m}\Omega]$ ($V$[kV], $P_t$[kVA])<br>
+       $R_t=\dfrac{Z_t}{\sqrt{1+(X/R)_t^{2}}},\quad X_t=\dfrac{Z_t}{\sqrt{1+(R/X)_t^{2}}}$<br>
+       변압기 보정계수: $K_T=\dfrac{0.95\,C_{max}}{1+0.6\,x_{T,pu}}$<br>
+       변압기 리액턴스 (pu): $x_{T,pu}=\dfrac{X_t}{Z_{base}},\ Z_{base}=\dfrac{V^2}{P_t}$
+       &nbsp;(단위 환산: $x_{T,pu}=\dfrac{X_t\,P_t}{V^2}$, $X_t$[mΩ]·$P_t$[kVA]·$V$[V])<br>
+       보정 후: $Z_T=K_T Z_t,\ R_T=K_T R_t,\ X_T=K_T X_t$</div>
+    <div style="margin-top:14px"><b>(3) 도체 임피던스:</b> $O_a=1/[1+\alpha\cdot70]$, $O_b=[1+\alpha\cdot230]\cdot O_a$</div>
+    <div style="margin-top:14px"><b>(4) 단락전류 (3상: F1·F2 모두 $k=\sqrt3$, 왕복계수 $\eta=1$):</b>
        $$ I_F=\frac{K_{asym}\cdot C\cdot V/k}{\sqrt{R_{tot}^2+X_{tot}^2}}\times10^3 $$</div>
-  <div id="B_Isc"></div>
+  </div>
+  <div id="B_Isc" data-flat="1"></div>
 
   <h3>6. 과부하 보호장치 선정<span class="ref">5.1.8 - 4 / KEC 212.4</span></h3>
-  <div>(1) 설계전류 기준: $I_B\le I_n$<br>
+  <div class="sh">6.1 설계기준 (적용 계산식)</div>
+  <div style="line-height:1.9">(1) 설계전류 기준: $I_B\le I_n$<br>
        (2) $I_2\le1.45\,I_z$<br>
        (3) <b>기동전류 기준</b>: $I_n\ge\dfrac{I_B\cdot\beta}{\gamma}$ ($\gamma$=규약동작배율)<br>
        → (1)·(3) 중 큰 정격을 선정</div>
   <div id="B_over"></div>
 
   <h3>7. 단락 보호장치 선정<span class="ref">5.1.8 - 5 / KEC 212.3.5</span></h3>
-  <div>(1) 단시간 내열: $t_z=\left(\dfrac{S\cdot K}{I_{F2,min}}\right)^2$, $t_n<t_z$<br>
+  <div class="sh">7.1 설계기준 (적용 계산식)</div>
+  <div style="line-height:1.9">(1) 단시간 내열: $t_z=\left(\dfrac{S\cdot K}{I_{F2,min}}\right)^2$, $t_n < t_z$<br>
        (2) <b>기동돌입전류 기준</b>: $I_{rush}=I_B\cdot\beta\cdot C\cdot k_{rush}$, $I_n\ge\dfrac{I_{rush}\cdot a}{\delta}$<br>
        <b>차단전류:</b> $I_{cu}\ge1.25\,I_{F1,max}$</div>
   <div id="B_short"></div>
@@ -191,11 +273,21 @@ window.MathJax = {
     $$ e_{st}(\%)=\frac{K\cdot I_{st}\cdot L\cdot(R\cos\theta_s+X\sin\theta_s)}{V}\times100 $$</div>
   <div id="B_eSt"></div>
 
-  <h3>10. 보호도체(PE) 단면적<span class="ref">KEC 142.3-1</span></h3>
-  <div>$S_{PE}=S\,(S\le16),\ 16\,(16<S\le35),\ S/2\,(S>35)$</div>
+  <h3>10. 도체 단면적 조정에 따른 재계산<span class="ref">5.1.8 - 6</span></h3>
+  <div class="sh">10.1 설계기준 (적용 계산식)</div>
+  <div style="line-height:1.9">(1) 단면적이 조정된 경우 F1·F2 고장전류를 조정된 단면적으로 재계산 (5.1과 동일한 식)<br>
+       (2) 단락고장에 의한 도체의 단시간 허용온도 도달시간 $t_z=\left(\dfrac{S\cdot K}{I_{F2,min}}\right)^2$ 재계산, $t_n < t_z$ 재평가<br>
+       (3) 보호장치 정격차단전류 $I_{cu}\ge1.25\,I_{F1,max}$ 재선정</div>
+  <div id="B_recalc"></div>
+
+  <h3>11. 보호도체(PE) 단면적<span class="ref">KEC 142.3.2 / 표 142.3-1</span></h3>
+  <div class="sh">11.1 설계기준 (적용 계산식)</div>
+  <div style="line-height:1.9">(1) 표 142.3-1: $S_{PE}=S\,(S\le16),\ 16\,(16 < S \le 35),\ S/2\,(S>35)$ — 최종 선도체 단면적 기준<br>
+       (2) 142.3.2 계산식: $S_{PE}=\dfrac{\sqrt{I^2\,t}}{K}\times a=\dfrac{I_{F2,max}\sqrt{t_n}}{K}\times a$ — 선도체 단면적이 조정된 경우 (1) 대신 이 결과를 채택<br>
+       &nbsp;&nbsp;&nbsp;($I_{F2,max}$: 조정된 단면적 기준 F2 최대단락전류, $t_n$: 보호장치 순시차단시간 0.1 s, $K$: 보호도체 절연물 상수 — PVC 300㎟ 이하 143·300㎟ 초과 133·XLPE 176, $a$: 설계여유 1.25)</div>
   <div id="B_PE"></div>
 
-  <h3>11. 최종 결과</h3>
+  <h3>12. 최종 결과</h3>
   <div id="B_final"></div>
 </div>
 
@@ -210,24 +302,49 @@ const CFG = {
   cable:'F-CV', cores:3, wiring:'B2', layoutGroup:'B2-1',
   izKey:'3ph_3C', izCol:'B2', rxKey:'F-CV_3ph_3C', feederKey:'F-CV_3ph_평면',
   protType:'MCCB', protName:'산업용 MCCB', peName:'GV',
-  K_short:143, K_PE:176,
+  K_short:143, K_PE:143, tn_PE:0.1,
   Kw:30.8,             // 3상 3선 전압강하 단순식 계수
   K_drop:Math.sqrt(3), // 3상 전압강하 계수
   k_sc:Math.sqrt(3),   // 3상 단락 변환계수 (F1·F2 공통)
   eta:1,               // 3상 왕복계수
   C_start:1, a_margin:1.25,
   defaults:{P:22,V:380,eff:0.88,cos:0.80,beta:7.2,tm:6,cosS:0.20,krush:1.5,
-            L:60,emax:2.0,emaxSt:7.0,gamma:4.4,delta:10,
+            L:60,emax:2.0,emaxSt:7.0,gamma:4.4,tmin:9,delta:10,
             Ps:300,XR_s:10,Pt:1500,pZ:7,XR_t:6.54,VF:380,LF:120,
             Ta:'40',Nc:'1',Np:'1',SF:'300'}
 };
 
+// 보정표 표시 범위: 선정 단면적 기준 위(작은 쪽) 3개·아래(큰 쪽) 2개
+function izWindow(list, sel){
+  const i=list.indexOf(sel); if(i<0) return list;
+  return list.slice(Math.max(0,i-3), i+3);
+}
+// 단락전류 계산과정 표시 (F1·F2): 합성 R·X → Z → K_asym → I_max / I_min
+function scBlock(title, o){
+  const f=(v,d)=>fmt(v,d);
+  const tex=a=>a.map(x=>x.s).join('+');
+  const val=a=>a.map(x=>f(x.v,4)).join('+');
+  const sum=a=>a.reduce((t,x)=>t+x.v,0);
+  const Rn=sum(o.Rn), Rm=sum(o.Rm), X=sum(o.X);
+  const Zn=Math.hypot(Rn,X), Zm=Math.hypot(Rm,X);
+  const Ka=Math.sqrt(1+2*Math.exp(-2*Math.PI*Rn/X));
+  const Iu=Ka*o.Cmax*(o.V/o.k)/Zn*1000, Il=o.Cmin*(o.V/o.k)/Zm*1000;
+  const kt=Math.abs(o.k-Math.sqrt(3))<1e-9?'\\sqrt3':String(o.k);
+  const vk=`${o.V}/${kt}`;
+  return `<div class="sh2">${title}</div>`
+    +`<div>$$R_{tot}=${tex(o.Rn)}=${val(o.Rn)}=${f(Rn,4)}\\text{ mΩ (20°C)}$$</div>`
+    +`<div>$$X_{tot}=${tex(o.X)}=${val(o.X)}=${f(X,4)}\\text{ mΩ}$$</div>`
+    +`<div>$$Z=\\sqrt{R_{tot}^2+X_{tot}^2}=\\sqrt{${f(Rn,4)}^2+${f(X,4)}^2}=${f(Zn,4)}\\text{ mΩ},\\quad K_{asym}=\\sqrt{1+2e^{-2\\pi R/X}}=${f(Ka,4)}$$</div>`
+    +`<div>$$I_{max}=\\frac{K_{asym}\\cdot C_{max}\\cdot V/k}{Z}\\times10^3=\\frac{${f(Ka,4)}\\times${o.Cmax}\\times${vk}}{${f(Zn,4)}}\\times10^3=\\mathbf{${f(Iu,0)}}\\text{ A}$$</div>`
+    +`<div>$$R_{tot}(250°C)=${val(o.Rm)}=${f(Rm,4)}\\text{ mΩ},\\ Z=${f(Zm,4)}\\text{ mΩ}$$</div>`
+    +`<div>$$I_{min}=\\frac{C_{min}\\cdot V/k}{Z}\\times10^3=\\frac{${o.Cmin}\\times${vk}}{${f(Zm,4)}}\\times10^3=\\mathbf{${f(Il,0)}}\\text{ A}$$</div>`;
+}
 function calc(){
   const P=+$('P').value, V=+$('V').value, eff=+$('eff').value, cos=+$('cos').value;
   const beta=+$('beta').value, tm=+$('tm').value, cosS=+$('cosS').value, krush=+$('krush').value;
   const L=+$('L').value, Ta=+$('Ta').value, Nc=+$('Nc').value, Np=+$('Np').value;
   const emx=+$('emax').value, emxSt=+$('emaxSt').value;
-  const gamma=+$('gamma').value, delta=+$('delta').value;
+  const gamma=+$('gamma').value, tmin=+$('tmin').value, delta=+$('delta').value;
   const Ps=+$('Ps').value, XRs=+$('XR_s').value;
   const Pt=+$('Pt').value, pZ=+$('pZ').value, XRt=+$('XR_t').value;
   const VF=+$('VF').value, SF=+$('SF').value, LF=+$('LF').value;
@@ -263,12 +380,32 @@ function calc(){
   const S3 = calcSize(Sv);
   const Sst = (IB*beta*Math.sqrt(tm)) / (CFG.K_short*Np) * CFG.a_margin;
   const S4 = calcSize(Sst);
-  const S = Math.max(S1,S2,S3,S4,2.5);
-
+  let S = Math.max(S1,S2,S3,S4,2.5); const S_base = S;   // 4기준 선정값 → 전압강하 실제식으로 조정
   const RX_TABLE = D.CABLE_RX[CFG.rxKey];
-  const rxFinal = RX_TABLE[S] || [0,0];
+  const _nxt = s => { const i=SIZES.indexOf(s); const nx=SIZES[Math.min(i+1,SIZES.length-1)]; return (RX_TABLE[nx] && (IzTable[nx]||IzTable_30[nx])) ? nx : s; };   // R/X·허용전류 표에 있는 최대 규격까지만 상향
+  // (서적 절차) 초기 선정 S0 → 보호협조(In ≤ Iz, I2 ≤ 1.45Iz) 조정 → 전압강하 평가 조정 → 조정 단면적으로 재계산
+  const izAt = s => IzTable[s] ?? (IzTable_30[s] ? IzTable_30[s]*Ktotal*Np : 0);
+  const S0 = S_base, Iz0 = izAt(S0);
+  const k2d = D.helpers.i2k('MCCB',In_design), I2d = k2d*In_design, ok_I2d = I2d <= 1.45*Iz0;   // 6.2 (2): 설계전류 기준 In의 I2 평가 (초기 단면적)
+  const coordSteps = []; let Sc = S0;
+  for (;;) {
+    const _iz = izAt(Sc), _I2 = D.helpers.i2k('MCCB',In)*In, _okC = _iz>=In, _ok145 = _I2<=1.45*_iz;
+    coordSteps.push({S:Sc, iz:_iz, I2:_I2, okC:_okC, ok145:_ok145});
+    if ((_okC && _ok145) || _nxt(Sc)===Sc) break;
+    Sc = _nxt(Sc);
+  }
+  S = Sc;
+  const vdSteps = []; let rxFinal;
+  for (;;) {
+    rxFinal = RX_TABLE[S] || [0,0];
+    const _er = CFG.K_drop*IB*(L/1000)*(rxFinal[0]*cos+rxFinal[1]*sinθ)/V*100;
+    const _es = CFG.K_drop*Ist*(L/1000)*(rxFinal[0]*cosS+rxFinal[1]*sinθs)/V*100;
+    vdSteps.push({S:S, er:_er, es:_es});
+    if ((_er<=emx && _es<=emxSt) || _nxt(S)===S) break;
+    S = _nxt(S);
+  }
+  const Iz_final = izAt(S);
   if (!IzTable[S] && IzTable_30[S]) IzTable[S]=IzTable_30[S]*Ktotal*Np;
-  const Iz_final = IzTable[S];
 
   // 4. 단락전류 (3상: F1·F2 모두 k=√3, η=1)
   const Cmax=D.VOLTAGE_FACTOR.Cmax, Cmin=D.VOLTAGE_FACTOR.Cmin;
@@ -283,31 +420,47 @@ function calc(){
   const ZT=KT*Zt, RT=ZT/Math.sqrt(1+XRt*XRt), XT=ZT/Math.sqrt(1+1/(XRt*XRt));
   const [R0F,X0F] = D.CABLE_RX[CFG.feederKey][SF] ?? D.CABLE_RX[CFG.feederKey][300];
   const RF_norm=R0F*LF*Oa, RF_max=R0F*LF*Ob, XF=X0F*LF;
-  const [R0B,X0B] = RX_TABLE[S];
-  const RB_norm=R0B*L*Oa/Np, RB_max=R0B*L*Ob/Np, XB=X0B*L/Np;
-
   function asymK(R,X){ return Math.sqrt(1+2*Math.exp(-2*Math.PI*R/X)); }
   const k=CFG.k_sc, eta=CFG.eta;
-  const Rt1=Rs+RT+RF_norm*eta, Xt1=Xs+XT+XF*eta;
-  const IF1_max=asymK(Rt1,Xt1)*Cmax*(VF/k)/Math.sqrt(Rt1*Rt1+Xt1*Xt1)*1000;
-  const Rt1m=Rs+RT+RF_max*eta, Xt1m=Xs+XT+XF*eta;
-  const IF1_min=Cmin*(VF/k)/Math.sqrt(Rt1m*Rt1m+Xt1m*Xt1m)*1000;
-  const Rt2=Rs+RT+(RF_norm+RB_norm)*eta, Xt2=Xs+XT+(XF+XB)*eta;
-  const IF2_max=asymK(Rt2,Xt2)*Cmax*(VF/k)/Math.sqrt(Rt2*Rt2+Xt2*Xt2)*1000;
-  const Rt2m=Rs+RT+(RF_max+RB_max)*eta, Xt2m=Xs+XT+(XF+XB)*eta;
-  const IF2_min=Cmin*(VF/k)/Math.sqrt(Rt2m*Rt2m+Xt2m*Xt2m)*1000;
+  const _m=(x)=>eta===1?x:eta+'\\,'+x;
+  // 단락전류 계산 — 분기 단면적 Sx 기준 (초기 S0, 조정 후 S 각각)
+  function sc(Sx){
+    const [R0B,X0B] = RX_TABLE[Sx] || [0,0];
+    const RB_norm=R0B*L*Oa/Np, RB_max=R0B*L*Ob/Np, XB=X0B*L/Np;
+    const Rt1=Rs+RT+RF_norm*eta, Xt1=Xs+XT+XF*eta;
+    const IF1_max=asymK(Rt1,Xt1)*Cmax*(VF/k)/Math.sqrt(Rt1*Rt1+Xt1*Xt1)*1000;
+    const Rt1m=Rs+RT+RF_max*eta, Xt1m=Xs+XT+XF*eta;
+    const IF1_min=Cmin*(VF/k)/Math.sqrt(Rt1m*Rt1m+Xt1m*Xt1m)*1000;
+    const Rt2=Rs+RT+(RF_norm+RB_norm)*eta, Xt2=Xs+XT+(XF+XB)*eta;
+    const IF2_max=asymK(Rt2,Xt2)*Cmax*(VF/k)/Math.sqrt(Rt2*Rt2+Xt2*Xt2)*1000;
+    const Rt2m=Rs+RT+(RF_max+RB_max)*eta, Xt2m=Xs+XT+(XF+XB)*eta;
+    const IF2_min=Cmin*(VF/k)/Math.sqrt(Rt2m*Rt2m+Xt2m*Xt2m)*1000;
+    const scF1={V:VF,k:k,Cmax,Cmin,
+      Rn:[{s:'R_s',v:Rs},{s:'R_T',v:RT},{s:_m('R_F'),v:RF_norm*eta}],
+      Rm:[{s:'R_s',v:Rs},{s:'R_T',v:RT},{s:_m('R_F'),v:RF_max*eta}],
+      X:[{s:'X_s',v:Xs},{s:'X_T',v:XT},{s:_m('X_F'),v:XF*eta}]};
+    const scF2={V:VF,k:k,Cmax,Cmin,
+      Rn:[{s:'R_s',v:Rs},{s:'R_T',v:RT},{s:_m('R_F'),v:RF_norm*eta},{s:_m('R_B'),v:RB_norm*eta}],
+      Rm:[{s:'R_s',v:Rs},{s:'R_T',v:RT},{s:_m('R_F'),v:RF_max*eta},{s:_m('R_B'),v:RB_max*eta}],
+      X:[{s:'X_s',v:Xs},{s:'X_T',v:XT},{s:_m('X_F'),v:XF*eta},{s:_m('X_B'),v:XB*eta}]};
+    return {R0B,X0B,RB_norm,RB_max,XB,IF1_max,IF1_min,IF2_max,IF2_min,scF1,scF2};
+  }
+  const {R0B,X0B,RB_norm,RB_max,XB,IF1_max,IF1_min,IF2_max,IF2_min,scF1,scF2} = sc(S0);   // 초기 단면적(S0) 기준 — 5장
+  const Fin = sc(S);                                                                    // 조정 단면적(S) 기준 — 재계산(10장)
 
   // 5. 과부하 보호
-  const I2=1.45*In, Iz145=1.45*Iz_final;
+  const I2 = D.helpers.i2k('MCCB',In)*In, Iz145=1.45*Iz_final;
   const ok_I2=I2<=Iz145;
 
   // 6. 단락 보호
-  const tz=(S*CFG.K_short/IF2_min)**2;
+  const tz0=(S0*CFG.K_short/IF2_min)**2, tz=(S*CFG.K_short/Fin.IF2_min)**2;
   const Irush = IB*beta*CFG.C_start*krush;
   const In_inrush = D.helpers.nextIn(CFG.protType, Irush*CFG.a_margin/delta);
   const In_short = Math.max(In, In_inrush);
-  const tn=0.1, ok_tn=tn<tz;
-  const Icu_req=IF1_max*1.25/1000;
+  const sp0 = D.helpers.shortProt({type:CFG.protType,name:CFG.protName,In:In_short,IF2:IF2_min,Seff:S0,K:CFG.K_short,imgW:220});   // 7장: 초기 단면적 기준
+  const sp = D.helpers.shortProt({type:CFG.protType,name:CFG.protName,In:In_short,IF2:Fin.IF2_min,Seff:S,K:CFG.K_short,imgW:220}); const tn = sp.tn, ok_tn = sp.ok;   // 10장: 조정 단면적 기준
+  const Icu0_req=IF1_max*1.25/1000, Icu0=D.helpers.nextIcu(CFG.protType, Icu0_req);
+  const Icu_req=Fin.IF1_max*1.25/1000;
   const Icu=D.helpers.nextIcu(CFG.protType, Icu_req);
 
   // 7. 전압강하
@@ -316,8 +469,11 @@ function calc(){
   const ok_e = e_run<=emx, ok_eSt = e_st<=emxSt;
 
   // 8. 보호도체
-  let SPE = S<=16?S:(S<=35?16:S/2);
-  SPE = calcSize(SPE);
+  // 보호도체: 조정 없음 → 표 142.3-1(초기 선정 단면적), 조정 있음 → 142.3.2 계산식(조정 단면적 기준 F2 최대단락전류)
+  const SPE_tab = calcSize(S<=16?S:(S<=35?16:S/2));
+  const S_peCalc = Fin.IF2_max*Math.sqrt(CFG.tn_PE)/CFG.K_PE*CFG.a_margin, SPE_calc = calcSize(S_peCalc);
+  const peAdj = (S!==S0);
+  const SPE = peAdj ? SPE_calc : SPE_tab;
   const parTxt = Np>1 ? ` ×${Np}병렬` : '';
 
   // ===== 결과 요약 =====
@@ -328,14 +484,12 @@ function calc(){
   $('R_Icu').textContent=Icu+' kA';
   $('R_e').textContent=fmt(e_run,2)+' %';
   $('R_eSt').textContent=fmt(e_st,2)+' %';
-  $('R_IF1max').textContent=fmt(IF1_max,0)+' A';
-  $('R_IF2min').textContent=fmt(IF2_min,0)+' A';
+  $('R_IF1max').textContent=fmt(Fin.IF1_max,0)+' A';
+  $('R_IF2min').textContent=fmt(Fin.IF2_min,0)+' A';
   $('R_SPE').textContent=`${CFG.peName} ${SPE}㎟`;
+  $('R_key').innerHTML = D.helpers.keyJudge({IB:IB,In:In,Iz:Iz_final,I2:I2,Iz145:Iz145});
   $('R_judge').innerHTML=
-    `보호협조: I<sub>B</sub>(${fmt(IB,1)})≤I<sub>n</sub>(${In})≤I<sub>z</sub>(${fmt(Iz_final,1)}) — `+
-    `<span class="${IB<=In&&In<=Iz_final?'pass':'fail'}">${IB<=In&&In<=Iz_final?'적정':'부적정'}</span>`+
-    ` / I₂≤1.45Iz: <span class="${ok_I2?'pass':'fail'}">${ok_I2?'적정':'부적정'}</span>`+
-    ` / 운전강하: <span class="${ok_e?'pass':'fail'}">${ok_e?'적정':'부적정'}</span>`+
+    `운전강하: <span class="${ok_e?'pass':'fail'}">${ok_e?'적정':'부적정'}</span>`+
     ` / 기동강하: <span class="${ok_eSt?'pass':'fail'}">${ok_eSt?'적정':'부적정'}</span>`+
     ` / 단락보호: <span class="${ok_tn?'pass':'fail'}">${ok_tn?'적정':'부적정(곡선 확인)'}</span>`;
 
@@ -359,57 +513,98 @@ function calc(){
   $('B_IB').innerHTML=`$$ I_B=\\frac{${P}}{\\sqrt3\\times${V/1000}\\times${eff}\\times${cos}}=${fmt(IB,3)}\\text{ A},\\quad I_{st}=I_B\\times\\beta=${fmt(IB,2)}\\times${beta}=${fmt(Ist,1)}\\text{ A} $$`;
 
   let izRows='';
-  SIZES.filter(s=>IzTable_30[s] && s>=6 && s<=50).forEach(s=>{
-    izRows+=`<tr><td>${s}</td><td>${IzTable_30[s]}</td><td>×${fmt(Ka,2)}</td><td>×${fmt(Kg,2)}</td><td>×${fmt(Kp,2)}</td><td><b>${fmt(IzTable[s],1)}</b></td></tr>`;
+  const _izList = SIZES.filter(s=>IzTable_30[s]);
+  const _izShow = new Set([...izWindow(_izList, S0), ...izWindow(_izList, S)]);
+  _izList.filter(s=>_izShow.has(s)).forEach(s=>{
+    izRows+=`<tr${s===S ? ' class="sel"' : (s===S0 ? ' class="sel0"' : '')}><td>${s}</td><td>${IzTable_30[s]}</td><td>×${fmt(Ka,2)}</td><td>×${fmt(Kg,2)}</td><td>×${fmt(Kp,2)}</td><td><b>${fmt(IzTable[s],1)}</b></td></tr>`;
   });
   $('B_Iz').innerHTML=
     `$$ K_{total}=${fmt(Ka,2)}\\times${fmt(Kg,2)}\\times${fmt(Kp,2)}=${fmt(Ktotal,3)} $$
-     <table><thead><tr><th>S(㎟)</th><th>I<sub>z,30°C</sub></th><th>K<sub>ta</sub></th><th>K<sub>grp</sub></th><th>K<sub>par</sub></th><th>I<sub>z</sub>(A)</th></tr></thead><tbody>${izRows}</tbody></table>`;
+     <table><thead><tr><th>S(㎟)</th><th>I<sub>z,30°C</sub></th><th>K<sub>ta</sub></th><th>K<sub>grp</sub></th><th>K<sub>par</sub></th><th>I<sub>z</sub>(A)</th></tr></thead><tbody>${izRows}</tbody></table><div class="izn">※ ${S===S0 ? `선정 단면적(${S}㎟, 노란색)` : `최초 선정(${S0}㎟, 연한 파랑)·최종 선정(${S}㎟, 노란색)`} 기준 위 3개·아래 2개 단면적만 표시</div>`;
 
   $('B_S').innerHTML=
-    `(1) 설계전류 기준: $I_B=${fmt(IB,2)}$ A → ${S1}㎟<br>
-     (2) 과부하 I<sub>n</sub>(설계전류 기준 ${In_design}A) → ${S2}㎟<br>
+    `<div class="sh">4.2 계산</div><div>(1) 설계전류 기준: $I_B=${fmt(IB,2)}$ A → ${S1}㎟<br>
+     (2) 과부하 I<sub>n</sub>(설계전류 기준): $I_n=${In_design}$ A → ${S2}㎟<br>
      (3) 전압강하 단순식: $$S_v=\\frac{${CFG.Kw}\\times${fmt(IB,2)}\\times${L}}{1000\\times${V}\\times${emx/100}}=${fmt(Sv,3)}㎟\\rightarrow${S3}㎟$$
      (4) 기동전류 온도상승: $$S_{st}=\\frac{${fmt(IB,2)}\\times${beta}\\times\\sqrt{${tm}}}{${CFG.K_short}\\times${Np}}\\times${CFG.a_margin}=${fmt(Sst,3)}㎟\\rightarrow${S4}㎟$$
-     <b>→ 최종 단면적 $S=\\max(${S1},${S2},${S3},${S4})=${S}$㎟${parTxt}, $I_z=${fmt(Iz_final,1)}$ A</b>`;
+     (5) 설계전류 기준 $I_n$의 $I_2\\le1.45I_z$ 확인 (초기 선정 S=${S0}㎟): $I_2=${k2d}\\times${In_design}=${fmt(I2d,1)}$ A, $\\ 1.45I_z=1.45\\times${fmt(Iz0,1)}=${fmt(1.45*Iz0,1)}$ A → <span class="${ok_I2d?'judge-ok':'judge-no'}">${ok_I2d?'적정':'부적정'}</span></div>
+     <div class="sh">4.3 결과 요약</div><div><b>→ 선도체 단면적 $S=\\max(${S1},${S2},${S3},${S4})=${S0}$㎟${parTxt}, $I_z=${fmt(Iz0,1)}$ A</b> <span style="font-size:.9em;color:#6b7280">(초기 선정 — 보호협조·전압강하는 6.3, 8·9장에서 평가)</span></div>`;
 
   $('B_Isc').innerHTML=
-    `$$Z_s=${fmt(Zs,4)}\\text{ mΩ},\\ R_s=${fmt(Rs,4)},\\ X_s=${fmt(Xs,4)}$$
-     $$Z_t=${fmt(Zt,4)},\\ K_T=${fmt(KT,5)},\\ Z_T=${fmt(ZT,4)},\\ R_T=${fmt(RT,4)},\\ X_T=${fmt(XT,4)}\\text{ mΩ}$$
-     $O_a=${fmt(Oa,5)},\\ O_b=${fmt(Ob,5)}$
+`<div class="sh" data-pb="1">5.2 계산</div><div class="note">※ 4.3에서 선정한 초기 단면적(${S0}㎟) 기준으로 계산. 6.3·8·9장에서 단면적이 조정되면 10장에서 재계산한다.</div>
+     <div class="sh2">(1) 전원 임피던스</div>
+    <div>$$Z_s=${fmt(Zs,4)}\\text{ mΩ},\\ R_s=${fmt(Rs,4)},\\ X_s=${fmt(Xs,4)}$$</div>
+     <div class="sh2">(2) 변압기 임피던스</div>
+     <div>$$Z_t=${fmt(Zt,4)},\\ X_t=${fmt(Xt,4)},\\ x_{T,pu}=${fmt(xt_pu,5)},\\ K_T=${fmt(KT,5)},\\ Z_T=${fmt(ZT,4)},\\ R_T=${fmt(RT,4)},\\ X_T=${fmt(XT,4)}\\text{ mΩ}$$</div>
+     <div class="sh2">(3) 도체 임피던스 (온도환산)</div>
+     <div>$O_a=${fmt(Oa,5)},\\ O_b=${fmt(Ob,5)}$</div>
      <table><tr><th></th><th>R₀</th><th>X₀</th><th>L</th><th>R(20°C)</th><th>R(250°C)</th><th>X</th></tr>
-     <tr><td>분기 ${CFG.cable} ${S} 3C</td><td>${R0B}</td><td>${X0B}</td><td>${L}</td><td>${fmt(RB_norm,3)}</td><td>${fmt(RB_max,3)}</td><td>${fmt(XB,3)}</td></tr>
+     <tr><td>분기 ${CFG.cable} ${S0} 3C</td><td>${R0B}</td><td>${X0B}</td><td>${L}</td><td>${fmt(RB_norm,3)}</td><td>${fmt(RB_max,3)}</td><td>${fmt(XB,3)}</td></tr>
      <tr><td>간선 F-CV ${SF} 평면</td><td>${R0F}</td><td>${X0F}</td><td>${LF}</td><td>${fmt(RF_norm,3)}</td><td>${fmt(RF_max,3)}</td><td>${fmt(XF,3)}</td></tr></table>
+     <div class="sh2">(4) 단락전류 (F1·F2)</div>
+     ${scBlock('(4-1) F1 (간선–분기 접속점)', scF1)}${scBlock('(4-2) F2 (분기–부하 접속점)', scF2)}<div class="sh">5.3 결과 요약</div>
      <table><tr><th>지점</th><th>I<sub>max</sub>(A)</th><th>I<sub>min</sub>(A)</th></tr>
      <tr><td>F1 간선-분기</td><td><b>${fmt(IF1_max,0)}</b></td><td><b>${fmt(IF1_min,0)}</b></td></tr>
      <tr><td>F2 분기-부하</td><td><b>${fmt(IF2_max,0)}</b></td><td><b>${fmt(IF2_min,0)}</b></td></tr></table>`;
 
   $('B_over').innerHTML=
-    `(1) 설계전류 기준: $I_B=${fmt(IB,2)}$ → $I_n=${In_design}$ A<br>
-     (3) 기동전류 기준: $I_n\\ge\\dfrac{${fmt(IB,2)}\\times${beta}}{${gamma}}=${fmt(IB*beta/gamma,1)}$ A → ${In_start} A<br>
-     <b>→ 과부하 보호장치 정격 $I_n=\\max(${In_design},${In_start})=${In}$ A</b><br>
-     $I_2=1.45\\times${In}=${fmt(I2,1)}$ A, $\\ 1.45I_z=${fmt(Iz145,1)}$ A → <span class="${ok_I2?'judge-ok':'judge-no'}">${ok_I2?'적정':'부적정'}</span>`;
+    `<div class="sh">6.2 계산</div><div style="line-height:1.9">(1) 설계전류 기준: $I_B=${fmt(IB,2)}$ A → $I_n=${In_design}$ A<br>
+     (2) 기동전류 기준: 기동시간 $t_m=${tm}$ s, 보호장치 최소동작시간 $t_{min}=${tmin}$ s (기동시간에 50~100% 가산, 가산시간 5 s 이하: ${fmt(1.5*tm,1)}~${fmt(Math.min(2*tm,tm+5),1)} s ${(tmin>=1.5*tm-1e-9&&tmin<=Math.min(2*tm,tm+5)+1e-9)?'<span class="judge-ok">범위 내</span>':'<span class="judge-no">범위 초과</span>'}), 규약동작배율 $\\gamma=${gamma}$ (아래 곡선에서 $t_{min}$와 교점 아래측 전류배율)<br>
+     &nbsp;&nbsp;&nbsp;$I_n\\ge\\dfrac{I_B\\cdot\\beta}{\\gamma}=\\dfrac{${fmt(IB,2)}\\times${beta}}{${gamma}}=${fmt(IB*beta/gamma,1)}$ A → ${In_start} A<br>
+     <b>→ 과부하 보호장치 정격 $I_n=\\max(${In_design},${In_start})=${In}$ A</b></div>
+     ${D.helpers.gammaFig(CFG.protType, In_start, gamma, tmin, 220)}
+     <div class="sh">6.3 보호협조 평가 및 단면적 조정</div>
+     <div>$I_B\\le I_n\\le I_z$, $\\ I_2\\le1.45I_z$ ($I_2=${+(D.helpers.i2k('MCCB',In)).toFixed(2)}\\times${In}=${fmt(D.helpers.i2k('MCCB',In)*In,1)}$ A) 평가 — 부적정이면 바로 윗 규격으로 올려 적정이 될 때까지 반복한다.</div>
+     <table style="margin:3px 0"><thead><tr><th>단면적 (㎟)</th><th>I<sub>z</sub> (A)</th><th>I<sub>n</sub> ≤ I<sub>z</sub></th><th>I<sub>2</sub> ≤ 1.45I<sub>z</sub></th><th>판정</th></tr></thead><tbody>${coordSteps.map(st=>{const ok=st.okC&&st.ok145; return `<tr${ok?' class=\"sel\"':''}><td>${st.S}</td><td>${fmt(st.iz,1)}</td><td>${In} A ${st.okC?'≤':'>'} ${fmt(st.iz,1)} A${st.okC?'':' ✗'}</td><td>${fmt(st.I2,1)} A ${st.ok145?'≤':'>'} ${fmt(1.45*st.iz,1)} A${st.ok145?'':' ✗'}</td><td>${ok?'적정'+(coordSteps.length>1?' → 선정':''):'<b>부적정</b>'+(_nxt(st.S)===st.S?' (최대 규격 — 별도 검토 필요)':' → 다음 규격 검토')}</td></tr>`}).join('')}</tbody></table>
+     ${Sc!==S0?`<div>→ ${S0}㎟에서 $I_n$(${In} A) > $I_z$(${fmt(Iz0,1)} A)이므로 바로 윗 규격으로 올려 재평가하여, 적정이 되는 <b>${Sc}㎟</b>를 선정한다. (기동전류 기준으로 차단기 정격이 상향되어 도체를 조정)</div>`:`<div>→ ${S0}㎟에서 적정 — 조정 불필요.</div>`}`;
 
   $('B_short').innerHTML=
-    `(1) 단시간 내열: $$t_z=\\left(\\frac{${S}\\times${CFG.K_short}}{${fmt(IF2_min,0)}}\\right)^2=${fmt(tz,2)}\\text{ s}$$
-     (2) 기동돌입전류: $I_{rush}=${fmt(IB,2)}\\times${beta}\\times${CFG.C_start}\\times${krush}=${fmt(Irush,0)}$ A,
-     &nbsp;$I_n\\ge\\dfrac{${fmt(Irush,0)}\\times${CFG.a_margin}}{${delta}}=${fmt(Irush*CFG.a_margin/delta,1)}$ A → ${In_inrush} A<br>
+    `<div class="sh">7.2 계산</div><div class="note">※ 초기 단면적(${S0}㎟) 기준. 단면적이 조정되면 10장에서 재계산한다.</div>(1) 단락보호(단시간 내열)<br>${sp0.html}
+     (2) 기동돌입전류: $I_{rush}=I_B\\cdot\\beta\\cdot C\\cdot k_{rush}=${fmt(IB,2)}\\times${beta}\\times${CFG.C_start}\\times${krush}=${fmt(Irush,0)}$ A<br>
+     &nbsp;&nbsp;&nbsp;$I_n\\ge\\dfrac{I_{rush}\\cdot a}{\\delta}=\\dfrac{${fmt(Irush,0)}\\times${CFG.a_margin}}{${delta}}=${fmt(Irush*CFG.a_margin/delta,1)}$ A → ${In_inrush} A<br>
      <b>→ 단락 보호장치 정격 = $\\max(${In},${In_inrush})=${In_short}$ A</b><br>
-     차단전류: $I_{cu}=${fmt(IF1_max,0)}\\times1.25=${fmt(Icu_req,2)}$ kA → 표준 <b>${Icu} kA</b>`;
+     차단전류: $I_{cu}=${fmt(IF1_max,0)}\\times1.25=${fmt(Icu0_req,2)}$ kA → 표준 <b>${Icu0} kA</b>`;
 
-  $('B_e').innerHTML=
-    `${CFG.cable} ${S}㎟: $R=${R0B}$, $X=${X0B}$ Ω/km
+  const _vdBlkE = (S, R0B, X0B, e_run, ok_e) => `${CFG.cable} ${S}㎟: $R=${R0B}$, $X=${X0B}$ Ω/km
      $$e(\\%)=\\frac{\\sqrt3\\times${fmt(IB,2)}\\times${L/1000}\\times(${R0B}\\times${cos}+${X0B}\\times${fmt(sinθ,4)})}{${V}}\\times100=${fmt(e_run,3)}\\%$$
-     판정: $e ${ok_e?'\\le':'>'} ${emx}\\%$ — <span class="${ok_e?'judge-ok':'judge-no'}">${ok_e?'적정':'부적정'}</span>`;
+     판정: $e\\,(${fmt(e_run,3)}\\%) ${ok_e?(e_run<emx?'<':'\\le'):'>'} ${emx}\\%$ — <span class="${ok_e?'judge-ok':'judge-no'}">${ok_e?'적정':'부적정'}</span>`;
+  const _why = st => { const r=[]; if(st.er>emx) r.push('운전 전압강하'); if(st.es>emxSt) r.push('기동 전압강하'); return r.join('·')+'가 부적정이므로'; };
+  const _from = Sc!==S0 ? `<div class="note">※ 6.3 보호협조 조정 후 단면적(${Sc}㎟)을 기준으로 평가한다.</div>` : '';
+  $('B_e').innerHTML = vdSteps.map((st,i)=>{ const _n=vdSteps.length>1, _last=i===vdSteps.length-1, _ok=st.er<=emx;
+    const _pre = (i===0 ? _from : '') + (!_n ? '' : (i===0 ? '' : (i===1 ? `<div class="sh">8.1 운전 전압강하 재평가</div>` : '') + (i>=2 ? `<div style="margin:8px 0 2px"><b>${i}차 재계산 — ${st.S}㎟</b></div>` : '')));
+    const _post = !_n ? '' : (_last ? `<div>→ 적정 — <b>${st.S}㎟</b> 선정 (최종)</div>` : `<div>→ ${_why(st)} 바로 윗 규격(${vdSteps[i+1].S}㎟)으로 증대하여 ${i===0?'8.1에서 ':''}재계산</div>`);
+    return _pre + (_vdBlkE(st.S,(RX_TABLE[st.S]||[0,0])[0],(RX_TABLE[st.S]||[0,0])[1],st.er,st.er<=emx)) + _post;
+  }).join('');
 
-  $('B_eSt').innerHTML=
-    `기동전류 $I_{st}=${fmt(Ist,1)}$ A, 기동시 역률 $\\cos\\theta_s=${cosS}$
+  const _vdBlkS = (R0B, X0B, e_st, ok_eSt) => `기동전류 $I_{st}=${fmt(Ist,1)}$ A, 기동시 역률 $\\cos\\theta_s=${cosS}$
      $$e_{st}(\\%)=\\frac{\\sqrt3\\times${fmt(Ist,1)}\\times${L/1000}\\times(${R0B}\\times${cosS}+${X0B}\\times${fmt(sinθs,4)})}{${V}}\\times100=${fmt(e_st,3)}\\%$$
-     판정: $e_{st} ${ok_eSt?'\\le':'>'} ${emxSt}\\%$ — <span class="${ok_eSt?'judge-ok':'judge-no'}">${ok_eSt?'적정':'부적정'}</span>`;
+     판정: $e_{st}\\,(${fmt(e_st,3)}\\%) ${ok_eSt?(e_st<emxSt?'<':'\\le'):'>'} ${emxSt}\\%$ — <span class="${ok_eSt?'judge-ok':'judge-no'}">${ok_eSt?'적정':'부적정'}</span>`;
+  $('B_eSt').innerHTML = vdSteps.map((st,i)=>{ const _n=vdSteps.length>1, _last=i===vdSteps.length-1, _ok=st.es<=emxSt;
+    const _pre = (i===0 ? _from : '') + (!_n ? '' : (i===0 ? '' : (i===1 ? `<div class="sh">9.1 기동 전압강하 재평가</div>` : '') + (i>=2 ? `<div style="margin:8px 0 2px"><b>${i}차 재계산 — ${st.S}㎟</b></div>` : '')));
+    const _post = !_n ? '' : (_last ? `<div>→ 적정 — <b>${st.S}㎟</b> 선정 (최종)</div>` : `<div>→ ${_why(st)} 바로 윗 규격(${vdSteps[i+1].S}㎟)으로 증대하여 ${i===0?'9.1에서 ':''}재계산</div>`);
+    return _pre + (_vdBlkS((RX_TABLE[st.S]||[0,0])[0],(RX_TABLE[st.S]||[0,0])[1],st.es,st.es<=emxSt)) + _post;
+  }).join('');
 
-  $('B_PE').innerHTML=`선도체 $S=${S}$㎟ → 표 142.3-1 → 보호도체 <b>${CFG.peName} ${SPE}㎟</b>`;
+  $('B_recalc').innerHTML = (S===S0)
+    ? `<div class="sh">10.2 계산</div><div>→ 도체 단면적이 조정되지 않아(${S0}㎟) 재계산이 필요 없다. (5·7장 결과 적용)</div>`
+    : `<div class="sh">10.2 계산</div><div class="note">※ 단면적 ${S0}㎟ → <b>${S}㎟</b> 조정에 따라 재계산한다. (분기 R·X는 ${S}㎟ 기준)</div>
+       <div class="sh2">(1) 조정된 단면적의 고장전류</div>
+       ${scBlock('(1-1) F1 (간선–분기 접속점)', Fin.scF1)}${scBlock('(1-2) F2 (분기–부하 접속점)', Fin.scF2)}
+       <table><tr><th>지점</th><th>I<sub>max</sub>(A)</th><th>I<sub>min</sub>(A)</th></tr>
+       <tr><td>F1 간선-분기</td><td><b>${fmt(Fin.IF1_max,0)}</b></td><td><b>${fmt(Fin.IF1_min,0)}</b></td></tr>
+       <tr><td>F2 분기-부하</td><td><b>${fmt(Fin.IF2_max,0)}</b></td><td><b>${fmt(Fin.IF2_min,0)}</b></td></tr></table>
+       <div class="sh2">(2) 단시간 허용온도 도달시간 재평가</div>${sp.html}
+       <div class="sh2">(3) 정격차단전류 재선정</div><div>$I_{cu}=${fmt(Fin.IF1_max,0)}\\times1.25=${fmt(Icu_req,2)}$ kA → 표준 <b>${Icu} kA</b></div>`;
 
-  $('B_final').innerHTML=`<table>
+  $('B_PE').innerHTML=`<div class="sh">11.2 계산</div>
+    <div>(1) 표 142.3-1 (최종 선도체 ${S}㎟${S<=16?' ≤ 16㎟ → $S_{PE}=S$':(S<=35?' (16 < S ≤ 35) → 16㎟':' (S > 35) → $S/2$')}): ${CFG.peName} <b>${SPE_tab}㎟</b></div>`
+    + (peAdj
+      ? `<div>(2) 선도체 단면적이 ${S0}㎟ → <b>${S}㎟</b>로 조정되었으므로 142.3.2 계산식을 적용한다. (조정 단면적 기준 $I_{F2,max}$)
+         $$S_{PE}=\\dfrac{I_{F2,max}\\sqrt{t_n}}{K}\\times a=\\dfrac{${fmt(Fin.IF2_max,0)}\\times\\sqrt{${CFG.tn_PE}}}{${CFG.K_PE}}\\times${CFG.a_margin}=${fmt(S_peCalc,2)}㎟\\rightarrow${SPE_calc}㎟$$</div>
+         <div><b>→ 보호도체 ${CFG.peName} ${SPE}㎟</b> (조정이 있어 계산식 결과 채택${SPE_calc<SPE_tab?` — 표 결과 ${SPE_tab}㎟보다 작으나 계산식 기준 충족`:''})</div>`
+      : `<div>(2) 선도체 단면적 조정이 없으므로 표 142.3-1 결과를 적용한다. <b>→ 보호도체 ${CFG.peName} ${SPE}㎟</b></div>`);
+
+  $('B_final').innerHTML = D.helpers.keyJudge({IB:IB,In:In,Iz:Iz_final,I2:I2,Iz145:Iz145}) + `<table>
     <tr><th>항목</th><th>결과</th><th>판정</th></tr>
     <tr><td>설계전류 I<sub>B</sub> / 기동전류 I<sub>st</sub></td><td>${fmt(IB,2)} A / ${fmt(Ist,0)} A</td><td>-</td></tr>
     <tr><td>선도체 단면적</td><td>${CFG.cable} ${S}㎟${parTxt} (I<sub>z</sub>=${fmt(Iz_final,1)} A)</td><td>${IB<=In&&In<=Iz_final?'<span class="judge-ok">적정</span>':'<span class="judge-no">부적정</span>'}</td></tr>
@@ -417,7 +612,7 @@ function calc(){
     <tr><td>MCCB 정격차단전류 I<sub>cu</sub></td><td>${Icu} kA</td><td>-</td></tr>
     <tr><td>운전 전압강하</td><td>${fmt(e_run,2)} % (허용 ${emx} %)</td><td>${ok_e?'<span class="judge-ok">적정</span>':'<span class="judge-no">부적정</span>'}</td></tr>
     <tr><td>기동 전압강하</td><td>${fmt(e_st,2)} % (허용 ${emxSt} %)</td><td>${ok_eSt?'<span class="judge-ok">적정</span>':'<span class="judge-no">부적정</span>'}</td></tr>
-    <tr><td>최대 단락전류 F1 / 최소 F2</td><td>${fmt(IF1_max,0)} A / ${fmt(IF2_min,0)} A</td><td>-</td></tr>
+    <tr><td>최대 단락전류 F1 / 최소 F2</td><td>${fmt(Fin.IF1_max,0)} A / ${fmt(Fin.IF2_min,0)} A</td><td>-</td></tr>
     <tr><td>보호도체 PE</td><td>${CFG.peName} ${SPE}㎟</td><td>-</td></tr>
   </table>`;
 
@@ -447,6 +642,23 @@ function resetDefault(){
 }
 
 calc();
+</script>
+<script>
+/* 화면 확대 바: 100% / 150% (CSS zoom, 마지막 선택은 브라우저에 저장) */
+(function(){
+  var key='kec_zoom', z=100;
+  try{var v=+localStorage.getItem(key); if(v===150) z=150;}catch(e){}
+  function apply(){
+    document.body.style.zoom=z===100?'':z/100;
+    var bar=document.getElementById('zbar'); bar.style.zoom=z===100?'':100/z;
+    document.getElementById('z100').className=z===100?'on':'';
+    document.getElementById('z150').className=z===150?'on':'';
+    try{localStorage.setItem(key,z);}catch(e){}
+  }
+  document.getElementById('z100').onclick=function(){z=100;apply();};
+  document.getElementById('z150').onclick=function(){z=150;apply();};
+  apply();
+})();
 </script>
 </body>
 </html>

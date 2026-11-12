@@ -8,8 +8,7 @@
 :root{--bg:#f3f5f8;--surface:#fff;--fg:#1a2330;--muted:#566274;--line:#d8dee6;--soft:#eaeef3;
 --book:#3446b0;--book-bg:#e7eaf9;--real:#0b7664;--real-bg:#dcf2ed;--go:#17784a;--warn:#8a5a00;--warn-bg:#fff3d6;
 --font:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif}
-@media (prefers-color-scheme:dark){:root{--bg:#12171f;--surface:#1a212b;--fg:#e6ebf2;--muted:#9aa7b8;--line:#2d3746;--soft:#222b37;
---book:#8e9cff;--book-bg:#222a52;--real:#4fd1b6;--real-bg:#12342e;--go:#5fd397;--warn:#ffd27a;--warn-bg:#3a2f12}}
+
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.65}
 .wrap{max-width:860px;margin:0 auto;padding:28px 16px 56px}
@@ -24,7 +23,7 @@ h1{font-size:clamp(24px,5vw,32px);margin:0 0 4px;line-height:1.25}
 .try p{margin:0 0 14px;color:var(--muted)}
 .btn{display:inline-block;font:inherit;font-weight:700;text-decoration:none;border-radius:6px;padding:12px 22px;background:var(--go);color:#fff;border:0}
 .btn.book{background:var(--book);color:#fff}.btn.real{background:var(--real);color:#fff}
-@media (prefers-color-scheme:dark){.btn,.btn.book,.btn.real{color:#0b1017}}
+
 .btn:hover{filter:brightness(1.1)}.btn:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var(--book);outline-offset:2px}
 .try small{display:block;margin-top:10px;color:var(--muted)}
 h2.sec{font-size:17px;margin:0 0 10px}
@@ -42,6 +41,57 @@ h2.sec{font-size:17px;margin:0 0 10px}
 .chips a{border:1px solid var(--line);background:var(--surface);color:var(--fg);text-decoration:none;border-radius:4px;padding:3px 12px;font-size:14px}
 .chips a:hover{border-color:var(--book);color:var(--book)}
 footer{border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:13px}
+</style>
+<style id="a4-680">
+/* ===== 공통 스타일: 글꼴 · 소제목 · 흰 배경 ===== */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap');
+:root{--kfont:"Noto Sans KR","Malgun Gothic","맑은 고딕",sans-serif;--kserif:"Noto Serif KR","Malgun Gothic","맑은 고딕",serif;--bg:#fff!important}
+html,html body{background:#fff!important;font-family:var(--kfont)}
+button,input,select,textarea,th,td,nav,label{font-family:var(--kfont)}
+h1,header.top h1{font-family:var(--kserif);font-weight:700;letter-spacing:-.01em}
+h1{font-size:1.6em;padding-bottom:8px;border-bottom:3px solid #1f6feb;margin-bottom:8px}
+h2{font-size:1.2em;font-weight:700;border-left:6px solid #1f6feb;letter-spacing:-.01em}
+h3{font-size:1.18em;font-weight:700;line-height:1.4;color:#0b4fb3;
+  background:linear-gradient(90deg,#e8f1ff 0%,#f6faff 60%,#fff 100%);
+  border-left:5px solid #1f6feb;border-bottom:1px solid #cfe0fb;border-radius:0 6px 6px 0;
+  padding:7px 12px;margin:20px 0 10px}
+h3 .ref,h3 .pg,h3 .no{font-family:var(--kfont)}
+h3 .ref{display:inline-block;font-size:12.5px;font-weight:600;line-height:1.4;border-radius:999px;padding:2px 11px;margin-left:10px;vertical-align:middle}
+h3 .no{color:#1f6feb;font-weight:700}
+/* 표: 맨 왼쪽·맨 오른쪽 테두리 없음 (상하 가로선 중심) */
+table th:first-child,table td:first-child{border-left:none!important}
+table th:last-child,table td:last-child{border-right:none!important}
+/* 글자 크기 (축소) */
+html body{font-size:14px!important}
+table{font-size:12.5px!important}
+.sub,.note,.izn{font-size:12.5px!important}
+h3 .ref{font-size:11.5px!important}
+@media print{
+  html body{font-size:10px!important}
+  table{font-size:9.5px!important}
+  .sub,.note,.izn{font-size:9.5px!important}
+  h3 .ref{font-size:9.5px!important}
+}
+@media print{h1,h2,h3{-webkit-print-color-adjust:exact;print-color-adjust:exact;break-after:avoid}}
+
+/* A4 출력용: 본문 한 줄 최대 폭 680px (A4 210mm - 좌우여백 14mm×2 = 182mm ≈ 688px) */
+html body{max-width:680px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:content-box!important}
+.wrap,.wrapper,.container,.layout,.flowwrap,.cmpwrap,.tabbar{max-width:680px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:content-box!important}
+.layout{display:block!important}
+nav{position:static!important;max-height:none!important;margin-bottom:12px}
+img,svg,canvas,pre,input,select,textarea{max-width:100%}
+input,select,textarea{min-width:0}
+.input-grid input,.input-grid select{display:block;width:100%;box-sizing:border-box}
+[class*="grid"]>*,.summary>*{min-width:0}
+table{max-width:100%}
+.tw,.fx,pre{overflow-x:auto}
+@media print{
+  @page{size:A4 portrait;margin:14mm}
+  html body{max-width:680px!important;margin:0 auto!important;padding:0!important}
+  table{width:100%!important;table-layout:auto;word-break:keep-all;overflow-wrap:anywhere}
+  th,td{min-width:0!important;white-space:normal!important}
+  .tw,.fx,pre{overflow:visible;white-space:pre-wrap}
+}
 </style>
 </head>
 <body>
@@ -71,7 +121,7 @@ footer{border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font
   <h2 class="sec">검증 예제 3건 (결과가 어떻게 나오는지 먼저 확인)</h2>
   <div class="cases">
     <div class="case"><b>G2 비전동기 20kVA</b><span>두 계산서 결과가 일치하는 예</span><a href="g2.html">서적판 G2 →</a></div>
-    <div class="case"><b>M2 전동기 22kW</b><span>굵기가 달라지는 예 (16㎟ 대 25㎟)</span><a href="m2.html">서적판 M2 →</a></div>
+    <div class="case"><b>M2 전동기 22kW</b><span>굵기는 일치, 기동 전압강하만 다른 예</span><a href="m2.html">서적판 M2 →</a></div>
     <div class="case"><b>M3 전동기 45kW Y-Δ</b><span>1차/2차 이중배선, 일치하는 예</span><a href="m3.html">서적판 M3 →</a></div>
   </div>
   <p style="margin:-14px 0 26px;color:var(--muted);font-size:14px">실무판에 같은 값을 넣는 방법과 결과 비교표는 사용 가이드에 있습니다.</p>

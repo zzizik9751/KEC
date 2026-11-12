@@ -25,12 +25,12 @@
 
   // ===== A4 치수 (96dpi 기준 mm→px 환산) =====================
   var MM = 96 / 25.4;                       // 1mm ≈ 3.7795px
-  var A4 = { w: 210, h: 297, margin: 13 };   // mm
+  var A4 = { w: 210, h: 297, margin: 15 };   // mm (본문 폭 = 680px, A4 출력 기준)
   var CONTENT_W = Math.floor((A4.w - A4.margin * 2) * MM);  // 본문 폭 px
   var CONTENT_H = Math.floor((A4.h - A4.margin * 2) * MM);  // 본문 높이 px
   var HEADER_H = 56;   // 페이지 머리말 영역 높이(px)
   var FOOTER_H = 30;   // 페이지 꼬리말 영역 높이(px)
-  var BODY_H = CONTENT_H - HEADER_H - FOOTER_H;  // 본문 콘텐츠 가용 높이
+  var BODY_H = CONTENT_H - HEADER_H - FOOTER_H - 10;  // 본문 콘텐츠 가용 높이 (측정 오차 여유 10px)
   var ORPHAN_GUARD = 90;  // 제목 뒤 최소 확보 높이(고아 방지)
 
   // ===== print 전용 CSS 동적 주입 ============================
@@ -39,6 +39,10 @@
     var css = [
       /* 화면에서는 인쇄 루트 숨김 */
       '#kec-print-root{display:none;}',
+      /* 글자 크기: 측정(.kec-meas)·미리보기·인쇄가 모두 동일 */
+      '.kec-page,.kec-meas{font-size:10px!important;}',
+      '.kec-page table,.kec-meas table{font-size:9.5px!important;}',
+      '.kec-page .sub,.kec-page .note,.kec-page .izn,.kec-page h3 .ref,.kec-meas .sub,.kec-meas .note,.kec-meas .izn,.kec-meas h3 .ref{font-size:9.5px!important;}',
       /* ---- 인쇄 시점 ---- */
       '@media print{',
       '  @page{size:A4;margin:' + A4.margin + 'mm;}',
@@ -51,17 +55,15 @@
       '    position:relative;overflow:hidden;page-break-after:always;break-after:page;}',
       '  .kec-page:last-child{page-break-after:auto;break-after:auto;}',
       '  .kec-ph{height:' + HEADER_H + 'px;border-bottom:1.5px solid #1f2937;',
-      '    display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:5px;}',
+      '    display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:5px;margin:0 14px;}',
       '  .kec-ph .t{font-size:13px;font-weight:bold;color:#1f2937;}',
       '  .kec-ph .s{font-size:10px;color:#6b7280;}',
-      '  .kec-pb{height:' + BODY_H + 'px;overflow:hidden;padding-top:8px;}',
+      '  .kec-pb{height:' + BODY_H + 'px;overflow:hidden;padding:8px 14px 0;}',
       '  .kec-pf{height:' + FOOTER_H + 'px;border-top:1px solid #d9dde3;',
       '    display:flex;justify-content:space-between;align-items:center;',
-      '    font-size:10px;color:#6b7280;}',
+      '    font-size:10px;color:#6b7280;margin:0 14px;}',
       '  .kec-page table{width:100%;border-collapse:collapse;}',
-      '  .kec-page th,.kec-page td{border:1px solid #999;padding:3px 6px;',
-      '    -webkit-print-color-adjust:exact;print-color-adjust:exact;}',
-      '  .kec-page th{background:#eef2f7;}',
+      '  .kec-page th,.kec-page td{-webkit-print-color-adjust:exact;print-color-adjust:exact;}',
       '  .kec-page h3{-webkit-print-color-adjust:exact;print-color-adjust:exact;}',
       '}',
       /* 화면 미리보기 모드(인쇄 안 하고 레이아웃 확인용) */
@@ -84,6 +86,7 @@
   // ===== 측정용 임시 컨테이너 ================================
   function makeMeasurer() {
     var m = document.createElement('div');
+    m.className = 'kec-meas';
     m.style.cssText = 'position:absolute;left:-99999px;top:0;width:' +
       (CONTENT_W - 28) + 'px;visibility:hidden;';
     document.body.appendChild(m);
@@ -93,6 +96,11 @@
     var clone = node.cloneNode(true);
     measurer.appendChild(clone);
     var h = clone.getBoundingClientRect().height;
+    // 위·아래 여백(margin)도 높이에 포함 (조판 누적 오차로 하단이 잘리는 것을 방지)
+    try {
+      var cs = global.getComputedStyle(clone);
+      h += (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+    } catch (e) {}
     measurer.removeChild(clone);
     return Math.ceil(h);
   }
@@ -179,6 +187,11 @@
     return pieces;
   }
 
+  // 제목 요소 판별: h1~h6 및 소제목 클래스(.sh)
+  function isHeadEl(el) {
+    return !!el && ((/^H[1-6]$/.test(el.tagName)) || (el.classList && (el.classList.contains('sh') || el.classList.contains('sh2'))));
+  }
+
   // ===== 핵심: 소스 콘텐츠를 A4 페이지들로 조판 ===============
   function paginate(sourceEl, meta) {
     var measurer = makeMeasurer();
@@ -201,16 +214,43 @@
     newPage();
 
     // 소스의 직계 자식을 "블록"으로 수집
-    var blocks = Array.prototype.slice.call(sourceEl.children);
+    var blocks = [];
+    Array.prototype.forEach.call(sourceEl.children, function (c) {
+      if (c.getAttribute && c.getAttribute('data-flat')) {
+        Array.prototype.forEach.call(c.children, function (x) { blocks.push(x); });
+      } else {
+        blocks.push(c);
+      }
+    });
 
     for (var i = 0; i < blocks.length; i++) {
       var src = blocks[i];
       if (src.classList && src.classList.contains('kec-skip-print')) continue;
 
+      // 강제 쪽나눔: data-pb 속성이 있는 블록은 항상 새 페이지에서 시작
+      if (src.getAttribute && src.getAttribute('data-pb') && curH > 0) newPage();
+
       var node = src.cloneNode(true);
-      var isHeading = /^H[1-6]$/.test(node.tagName);
+      var isHeading = isHeadEl(node);
       var hasTable = node.tagName === 'TABLE' || !!node.querySelector('table');
       var h = measureHeight(measurer, node);
+
+      // (0) 소제목 묶음 유지: 소제목(들) + 다음 소제목 전까지의 내용이
+      //     한 페이지 안에 들어가는 분량이면, 남은 공간이 모자랄 때 통째로 다음 페이지로 넘김.
+      //     (한 페이지보다 길면 기존처럼 이어서 배치)
+      if (isHeading && curH > 0) {
+        var gEnd = i;
+        while (gEnd < blocks.length && isHeadEl(blocks[gEnd])) gEnd++;
+        while (gEnd < blocks.length && !isHeadEl(blocks[gEnd])) gEnd++;
+        var groupH = 0;
+        for (var g = i; g < gEnd; g++) {
+          if (blocks[g].classList && blocks[g].classList.contains('kec-skip-print')) continue;
+          groupH += measureHeight(measurer, blocks[g]) + 4;
+        }
+        if (groupH <= BODY_H && curH + groupH > BODY_H) {
+          newPage();
+        }
+      }
 
       // (1) 제목 고아 방지: 제목인데 남은 공간이 부족하면 새 페이지
       if (isHeading) {

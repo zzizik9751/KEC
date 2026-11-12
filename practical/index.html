@@ -21,7 +21,7 @@
   .input-grid label{display:block;font-size:12px;color:#374151;white-space:nowrap;min-width:0;overflow:hidden}
   .input-grid input, .input-grid select{margin-top:3px;padding:5px 7px;border:1px solid var(--bd);border-radius:3px;font-size:13px;box-sizing:border-box}
   .input-grid label > input, .input-grid label > select{display:block;width:100%}
-  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:6px}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
   .summary .box{background:#eef6ff;border:1px solid #b6d4fe;border-radius:6px;padding:10px;text-align:center}
   .summary .box .v{font-size:16px;font-weight:bold;color:#1f6feb}
   .summary .box .l{font-size:11px;color:#374151;margin-bottom:4px}
@@ -56,12 +56,63 @@
     @page{size:A4;margin:14mm}
   }
 </style>
+<style id="a4-680">
+/* ===== 공통 스타일: 글꼴 · 소제목 · 흰 배경 ===== */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap');
+:root{--kfont:"Noto Sans KR","Malgun Gothic","맑은 고딕",sans-serif;--kserif:"Noto Serif KR","Malgun Gothic","맑은 고딕",serif;--bg:#fff!important}
+html,html body{background:#fff!important;font-family:var(--kfont)}
+button,input,select,textarea,th,td,nav,label{font-family:var(--kfont)}
+h1,header.top h1{font-family:var(--kserif);font-weight:700;letter-spacing:-.01em}
+h1{font-size:1.6em;padding-bottom:8px;border-bottom:3px solid #1f6feb;margin-bottom:8px}
+h2{font-size:1.2em;font-weight:700;border-left:6px solid #1f6feb;letter-spacing:-.01em}
+h3{font-size:1.18em;font-weight:700;line-height:1.4;color:#0b4fb3;
+  background:linear-gradient(90deg,#e8f1ff 0%,#f6faff 60%,#fff 100%);
+  border-left:5px solid #1f6feb;border-bottom:1px solid #cfe0fb;border-radius:0 6px 6px 0;
+  padding:7px 12px;margin:20px 0 10px}
+h3 .ref,h3 .pg,h3 .no{font-family:var(--kfont)}
+h3 .ref{display:inline-block;font-size:12.5px;font-weight:600;line-height:1.4;border-radius:999px;padding:2px 11px;margin-left:10px;vertical-align:middle}
+h3 .no{color:#1f6feb;font-weight:700}
+/* 표: 맨 왼쪽·맨 오른쪽 테두리 없음 (상하 가로선 중심) */
+table th:first-child,table td:first-child{border-left:none!important}
+table th:last-child,table td:last-child{border-right:none!important}
+/* 글자 크기 (축소) */
+html body{font-size:13px!important}
+table{font-size:11px!important}
+.sub,.note,.izn{font-size:11px!important}
+h3 .ref{font-size:11.5px!important}
+@media print{
+  html body{font-size:10px!important}
+  table{font-size:9.5px!important}
+  .sub,.note,.izn{font-size:9.5px!important}
+  h3 .ref{font-size:9.5px!important}
+}
+@media print{h1,h2,h3{-webkit-print-color-adjust:exact;print-color-adjust:exact;break-after:avoid}}
+
+/* A4 출력용: 본문 한 줄 최대 폭 680px (A4 210mm - 좌우여백 14mm×2 = 182mm ≈ 688px) */
+html body{max-width:680px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:content-box!important}
+.wrap,.wrapper,.container,.layout,.flowwrap,.cmpwrap,.tabbar{max-width:680px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:content-box!important}
+.layout{display:block!important}
+nav{position:static!important;max-height:none!important;margin-bottom:12px}
+img,svg,canvas,pre,input,select,textarea{max-width:100%}
+input,select,textarea{min-width:0}
+.input-grid input,.input-grid select{display:block;width:100%;box-sizing:border-box}
+[class*="grid"]>*,.summary>*{min-width:0}
+table{max-width:100%}
+.tw,.fx,pre{overflow-x:auto}
+@media print{
+  @page{size:A4 portrait;margin:14mm}
+  html body{max-width:680px!important;margin:0 auto!important;padding:0!important}
+  table{width:100%!important;table-layout:auto;word-break:keep-all;overflow-wrap:anywhere}
+  th,td{min-width:0!important;white-space:normal!important}
+  .tw,.fx,pre{overflow:visible;white-space:pre-wrap}
+}
+</style>
 </head>
 <body>
 
 <div class="card main-only">
   <h1>KEC 분기회로 단순화 계산서 (실무판)</h1>
-  <div class="sub">계산순서: 부하 → 차단기 → 케이블. 산업용 MCCB·XLPE 케이블 단일도체 한정. 간선 임피던스는 변압기 직결 가정으로 단순화(보수적). 차단기 정격이 400A 초과 시 부하 분리 권고.</div>
+  <div class="sub">계산순서: 부하 → 차단기 → 케이블 → 보호도체(PE). 계산 옵션(기동방식 계수·Y-Δ 전환 돌입·PE 기준)을 선택할 수 있으며, 옵션을 ‘미적용’으로 두면 서적판(M1~M5)과 같은 값이 산출됩니다. 산업용 MCCB·XLPE 케이블 단일도체 한정. 간선 임피던스는 변압기 직결 가정으로 단순화(보수적). 차단기 정격이 400A 초과 시 부하 분리 권고. <b>단상은 3.7kW(비전동기 3.7kVA)까지만 지원</b>하며, 초과 시 3상으로 선정하십시오.</div>
 </div>
 
 <div class="card main-only">
@@ -105,6 +156,15 @@
           <option selected>평면</option><option>삼각</option>
         </select></label>
     </div>
+    <h3>계산 옵션 — 보호도체(PE) <span class="ref">KEC 142.3.2 / 표 142.3-1</span></h3>
+    <div class="input-grid">
+      <label>보호도체(PE) 선정 기준
+        <select id="C_pe" onchange="onCommonChange()">
+          <option value="table" selected>상도체 단면적 기준 (표 142.3-1)</option>
+          <option value="calc">지락전류 계산 (142.3.2)</option>
+        </select></label>
+    </div>
+    <div class="note">표 142.3-1: 선도체 S≤16㎟ → S, 16&lt;S≤35 → 16㎟, S&gt;35 → S/2. 계산식: S<sub>PE</sub>=I<sub>F2,max</sub>·√t<sub>n</sub>/K·a (t<sub>n</sub>=0.1 s, K=143, a=1.25). 두 방식 모두 보호도체 종류는 F-GV(PVC)로 가정.</div>
     <div class="note" style="margin-top:14px">
       <b>변압기 직결 가정</b>: 실무 단순화상 간선 임피던스는 무시합니다. 단락전류는 전원+변압기+분기케이블만으로 계산되어 보수적(약간 더 큰 값)으로 산출됩니다.
       이로 인해 차단기 차단용량(Icu)은 안전 마진이 약간 확보됩니다.
@@ -118,7 +178,7 @@
     <h2>비전동기 분기회로</h2>
     <h3>부하 조건</h3>
     <div class="input-grid">
-      <label>전기방식
+      <label>전기방식 <span style="font-size:11px;color:#b54708">(단상은 3.7kVA까지만 지원)</span>
         <select id="G_phase" onchange="calcG()">
           <option value="1">단상</option>
           <option value="3" selected>3상</option>
@@ -175,6 +235,7 @@
       <div class="box"><div class="l">케이블 굵기 S</div><div class="v" id="G_R_S">-</div></div>
       <div class="box"><div class="l">허용전류 I<sub>z</sub></div><div class="v" id="G_R_Iz">-</div></div>
       <div class="box"><div class="l">차단용량 I<sub>cu</sub></div><div class="v" id="G_R_Icu">-</div></div>
+      <div class="box"><div class="l">보호도체 PE</div><div class="v" id="G_R_PE">-</div></div>
     </div>
     <div style="margin-top:8px" id="G_R_judge"></div>
     <div class="basis" id="G_basis">
@@ -189,7 +250,7 @@
     <h2>전동기 분기회로</h2>
     <h3>부하 / 기동 조건</h3>
     <div class="input-grid">
-      <label>전기방식
+      <label>전기방식 <span style="font-size:11px;color:#b54708">(단상은 3.7kW까지만 지원)</span>
         <select id="M_phase" onchange="calcM()">
           <option value="1">단상</option>
           <option value="3" selected>3상</option>
@@ -217,6 +278,21 @@
       <label>규약동작배율 γ<input id="M_gamma" type="number" step="0.05" value="4.4" oninput="calcM()"></label>
       <label>순시차단배율 δ<input id="M_delta" type="number" step="0.5" value="10" oninput="calcM()"></label>
     </div>
+    <h3>계산 옵션 <span class="ref">서적판 대조용</span></h3>
+    <div class="input-grid">
+      <label>기동방식 계수 C 적용
+        <select id="M_optC" onchange="calcM()">
+          <option value="1" selected>적용 (I<sub>B</sub>·β·C/γ)</option>
+          <option value="0">미적용 (I<sub>B</sub>·β/γ, 서적판)</option>
+        </select></label>
+      <label id="M_rowYD">Y-Δ 전환 돌입 고려
+        <select id="M_optYD" onchange="calcM()">
+          <option value="1" selected>고려</option>
+          <option value="0">미고려</option>
+        </select></label>
+      <label id="M_rowTc">Y-Δ 전환시 역률<input id="M_transferCos" type="number" step="0.01" min="0" max="1" value="0.50" oninput="calcM()"></label>
+    </div>
+    <div class="note">C 적용 여부는 ‘과부하 보호장치 정격(기동전류 기준)’과 ‘기동온도 기준 케이블 굵기’에 함께 적용됩니다. 기동 전압강하·돌입전류는 실제 기동전류(I<sub>ms</sub>)를 사용합니다. Soft Start·Inverter는 전류제한 방식이므로 β·C를 적용하지 않고, 선택한 전류제한값 λ(I<sub>B</sub>의 배수)를 기동전류 배율로 사용합니다(이 옵션과 무관).</div>
     <h3>배선·포설 조건</h3>
     <div class="input-grid">
       <label>케이블 종류
@@ -263,6 +339,7 @@
       <div class="box"><div class="l">MCCB 정격 I<sub>n</sub></div><div class="v" id="M_R_In">-</div></div>
       <div class="box"><div class="l">케이블 굵기 S</div><div class="v" id="M_R_S">-</div></div>
       <div class="box"><div class="l">차단용량 I<sub>cu</sub></div><div class="v" id="M_R_Icu">-</div></div>
+      <div class="box"><div class="l">보호도체 PE</div><div class="v" id="M_R_PE">-</div></div>
     </div>
     <div style="margin-top:8px" id="M_R_judge"></div>
     <div class="basis" id="M_basis">
@@ -279,7 +356,7 @@ const fmt = (n,d=2) => Number(n).toLocaleString('en-US',{minimumFractionDigits:d
 const SIZES = D.STANDARD_SIZES;
 
 // 공통 상태 (탭 0에서 갱신)
-const Common = {Ps:300, XRs:10, Pt:1000, pZ:6, XRt:5.71, Ta:40, cable:'HFCO', wiring:'B2', arr:'평면'};
+const Common = {Ps:300, XRs:10, Pt:1000, pZ:6, XRt:5.71, Ta:40, cable:'HFCO', wiring:'B2', arr:'평면', pe:'table'};
 
 // 공사방법 → 복수회로 배치그룹
 const LG = {A1:'A1-1',A2:'A2-1',B1:'B1-1',B2:'B2-1',C:'C-2',E:'E-4',F1:'F1-4',F2:'F2-4',D2:'D2-1'};
@@ -345,7 +422,8 @@ function shortCircuit(phase, V, S, cable, cores, arr, L){
   // F2 (분기 끝점) — + 분기케이블
   const SR2n=Rs+RT+RBn, SX2=Xs+XT+XB, SR2m=Rs+RT+RBm;
   const IF2min=Cmin*(V/k)/Math.sqrt(SR2m**2+SX2**2)*1000;
-  return {IF1max, IF2min, Zs, Rs, Xs, Zt, KT, ZT, RT, XT, RBn, RBm, XB, rx, Oa, Ob};
+  const IF2max=asym(SR2n,SX2)*Cmax*(V/k)/Math.sqrt(SR2n**2+SX2**2)*1000;
+  return {IF1max, IF2min, IF2max, Zs, Rs, Xs, Zt, KT, ZT, RT, XT, RBn, RBm, XB, rx, Oa, Ob};
 }
 
 // 400A 경고 메시지
@@ -362,13 +440,23 @@ function warnBox(In, isMotor, P){
   </div>`;
 }
 
+// 단상 3.7kW 지원 한도 경고
+function phaseWarn(phase, isMotor, P){
+  if (phase!==1 || P<=3.7) return '';
+  const unit = isMotor?'kW':'kVA';
+  return `<div class="warn-box">
+    <div class="head">⚠ 단상은 3.7 ${unit}까지만 지원</div>
+    입력 부하 ${P} ${unit}는 실무판 단상 지원 한도(3.7 ${unit})를 초과합니다. <b>전기방식을 3상으로 변경</b>하여 선정하십시오.
+  </div>`;
+}
+
 // 공통 상태 읽기·표시
 function onCommonChange(){
   Common.Ps=+$('C_Ps').value; Common.XRs=+$('C_XRs').value;
   Common.Pt=+$('C_Pt').value; Common.pZ=+$('C_pZ').value; Common.XRt=+$('C_XRt').value;
   Common.Ta=+$('C_Ta').value; Common.cable=$('C_cable').value;
-  Common.wiring=$('C_wiring').value; Common.arr=$('C_arr').value;
-  const s = `<b>공통조건:</b> 전원 ${Common.Ps} MVA (X/R ${Common.XRs}) · 변압기 ${Common.Pt} kVA / %Z ${Common.pZ} (X/R ${Common.XRt}) · 기본 ${Common.Ta}°C · ${Common.cable} / ${Common.wiring} ${Common.arr}`;
+  Common.wiring=$('C_wiring').value; Common.arr=$('C_arr').value; Common.pe=$('C_pe').value;
+  const s = `<b>공통조건:</b> 전원 ${Common.Ps} MVA (X/R ${Common.XRs}) · 변압기 ${Common.Pt} kVA / %Z ${Common.pZ} (X/R ${Common.XRt}) · 기본 ${Common.Ta}°C · ${Common.cable} / ${Common.wiring} ${Common.arr} · PE ${Common.pe==='table'?'표 142.3-1':'지락전류 계산'}`;
   $('common_summary').innerHTML = s;
   $('common_status_G').innerHTML = s;
   $('common_status_M').innerHTML = s;
@@ -392,8 +480,39 @@ function showTab(i){
   document.querySelectorAll('.tab-panel').forEach((p,k)=>p.classList.toggle('active', k===i));
 }
 
+// 보호도체(PE) — 옵션: 'table' 표 142.3-1(선도체 단면적 기준) / 'calc' 142.3.2 계산식(지락전류)
+const PE_CFG = {K:143, tn:0.1, a:1.25, name:'F-GV'};
+function peSize(S, IF2max){
+  const up=(req)=>{ for(const s of SIZES) if(s>=req) return s; return SIZES.at(-1); };
+  if (Common.pe==='table'){
+    const req = S<=16 ? S : (S<=35 ? 16 : S/2);
+    return {mode:'table', req, S:Math.max(up(req),2.5)};
+  }
+  const req = IF2max*Math.sqrt(PE_CFG.tn)/PE_CFG.K*PE_CFG.a;
+  return {mode:'calc', req, S:Math.max(up(req),2.5)};
+}
+function peBasis(pe, S, IF2max){
+  if (pe.mode==='table'){
+    const rule = S<=16 ? '$S\\le16$ → $S_{PE}=S$' : (S<=35 ? '$16<S\\le35$ → 16㎟' : '$S>35$ → $S/2='+fmt(S/2,1)+'$㎟');
+    return `표 142.3-1 (선도체 ${S}㎟: ${rule}) → <b>${PE_CFG.name} ${pe.S}㎟</b>`;
+  }
+  return `$$S_{PE}=\\frac{I_{F2,max}\\sqrt{t_n}}{K}\\cdot a=\\frac{${fmt(IF2max,0)}\\cdot\\sqrt{${PE_CFG.tn}}}{${PE_CFG.K}}\\cdot${PE_CFG.a}=${fmt(pe.req,2)}\\text{㎟}$$
+    ($I_{F2,max}$: 분기 끝점 최대단락전류, $t_n$: 순시차단시간, $K$: 보호도체 상수, $a$: 설계여유) → <b>${PE_CFG.name} ${pe.S}㎟</b>`;
+}
+// 케이블 선정 공통 (허용전류표 → Iz 계수)
+function izTable(phase, cores, wiring, arr, Ta, Nc){
+  const Ka = D.AMBIENT_TEMP.XLPE[Ta] ?? 1;
+  const grp = D.GROUP_REDUCTION[LG[wiring]] || [];
+  const Kg = grp[Nc-1] ?? 1;
+  const base = D.ALLOWABLE_CURRENT.XLPE[izKey(phase,cores)][izCol(wiring,arr)] || {};
+  const iz={}; for(const s of SIZES) if(base[s]) iz[s]=base[s]*Ka*Kg;
+  return iz;
+}
+const selSizeBy=(iz,req)=>{ for(const s of SIZES) if(iz[s]&&iz[s]>=req) return s; return SIZES.at(-1); };
+const calcSizeUp=(req)=>{ for(const s of SIZES) if(s>=req) return s; return SIZES.at(-1); };
+
 // =================================================================
-// 비전동기 분기 계산 (G)
+// 비전동기 분기 계산 (G) — ① 부하 → ② 차단기 → ③ 케이블 → ④ 단락·PE → ⑤ 검증
 // =================================================================
 function calcG(){
   const phase=+$('G_phase').value, V=+$('G_V').value;
@@ -402,55 +521,44 @@ function calcG(){
   const cores=+$('G_cores').value, arr=$('G_arr').value;
   const L=+$('G_L').value, Ta=+$('G_Ta').value, Nc=+$('G_Nc').value;
   const emax=+$('G_emax').value;
-  const sq3=Math.sqrt(3), k=phase===3?sq3:1, Ks=143;
+  const k=phase===3?Math.sqrt(3):1;
 
-  // 1. 설계전류 (kVA → A)
+  // ① 부하: 설계전류
   const IB = P*1000/(k*V);
-
-  // 2. 차단기 정격
+  // ② 차단기
   const In = D.helpers.nextIn('MCCB', IB);
-
-  // 3. 케이블 (3기준)
-  const Ka = D.AMBIENT_TEMP.XLPE[Ta] ?? 1;
-  const grp = D.GROUP_REDUCTION[LG[wiring]] || [];
-  const Kg = grp[Nc-1] ?? 1;
-  const Ktot = Ka*Kg;
-  const izTbl = D.ALLOWABLE_CURRENT.XLPE[izKey(phase,cores)][izCol(wiring,arr)] || {};
-  const iz={}; for(const s of SIZES) if(izTbl[s]) iz[s]=izTbl[s]*Ktot;
-  const selSize=(req)=>{ for(const s of SIZES) if(iz[s]&&iz[s]>=req) return s; return SIZES.at(-1); };
-  const calcSize=(req)=>{ for(const s of SIZES) if(s>=req) return s; return SIZES.at(-1); };
-
-  const S_iz   = selSize(In);   // Iz≥In 기준 (보호협조 즉시 충족)
+  // ③ 케이블: Iz≥In, 전압강하
+  const iz = izTable(phase,cores,wiring,arr,Ta,Nc);
+  const S_iz = selSizeBy(iz,In);
   const Kw = (phase===1) ? 35.6 : 30.8;
   const Sv = Kw*IB*L/(1000*V*emax/100);
-  const S_drop = calcSize(Sv);
+  const S_drop = calcSizeUp(Sv);
   const S = Math.max(S_iz, S_drop, 2.5);
   const Iz = iz[S] ?? 0;
-
-  // 4. 단락전류·차단용량
+  // ④ 단락전류·차단용량·보호도체
   const sc = shortCircuit(phase, V, S, cable, cores, arr, L);
   const Icu = D.helpers.nextIcu('MCCB', sc.IF1max*1.25/1000);
-
-  // 5. 전압강하 (실제식)
+  const pe = peSize(S, sc.IF2max);
+  // ⑤ 검증: 전압강하
   const sinT=Math.sqrt(Math.max(0,1-cos*cos));
   const e_run = k*IB*(L/1000)*(sc.rx[0]*cos+sc.rx[1]*sinT)/V*100;
   const ok_coord = IB<=In && In<=Iz;
   const ok_e = e_run<=emax;
 
-  // 렌더링
   $('G_R_IB').textContent  = fmt(IB,1)+' A';
   $('G_R_In').textContent  = In+' A';
   $('G_R_S').textContent   = cable+' '+S+'㎟';
   $('G_R_Iz').textContent  = fmt(Iz,0)+' A';
   $('G_R_Icu').textContent = Icu+' kA';
+  $('G_R_PE').textContent  = PE_CFG.name+' '+pe.S+'㎟';
   $('G_R_judge').innerHTML =
     `보호협조 I<sub>B</sub>(${fmt(IB,1)})≤I<sub>n</sub>(${In})≤I<sub>z</sub>(${fmt(Iz,0)}) — `+
     `<span class="${ok_coord?'pass':'fail'}">${ok_coord?'적정':'부적정'}</span> / `+
     `운전강하 ${fmt(e_run,2)}% — <span class="${ok_e?'pass':'fail'}">${ok_e?'적정':'부적정'}</span>`;
-  $('G_warn').innerHTML = warnBox(In, false, P);
+  $('G_warn').innerHTML = phaseWarn(phase, false, P) + warnBox(In, false, P);
 
   $('G_basis_inner').innerHTML = `
-    <h3>1. 설계전류</h3>
+    <h3>1. 부하 — 설계전류</h3>
     $$ I_B=\\frac{P\\times1000}{${phase===3?'\\sqrt3\\cdot V':'V'}}=\\frac{${P}\\times1000}{${phase===3?'\\sqrt3\\times'+V:V}}=${fmt(IB,2)}\\text{ A} $$
     <h3>2. 차단기 선정</h3>
     설계전류 기준: $I_n=\\text{nextIn}_\\text{MCCB}(${fmt(IB,1)})=${In}$ A
@@ -458,20 +566,30 @@ function calcG(){
     (a) 보호협조 $I_z\\ge I_n$: $S=${S_iz}$㎟ ($I_z=${fmt(iz[S_iz],0)}$A)<br>
     (b) 전압강하 $S_v=\\dfrac{${Kw}\\cdot${fmt(IB,1)}\\cdot${L}}{1000\\cdot${V}\\cdot${emax/100}}=${fmt(Sv,2)}$㎟ → ${S_drop}㎟<br>
     <b>→ 최종 $S=\\max(${S_iz},${S_drop})=${S}$㎟</b> ($I_z=${fmt(Iz,0)}$A)
-    <h3>4. 단락전류 (간선 무시·변압기 직결 가정)</h3>
+    <h3>4. 단락전류·차단용량 (간선 무시·변압기 직결 가정)</h3>
     $K_T=${fmt(sc.KT,5)}$, $R_T=${fmt(sc.RT,4)}$, $X_T=${fmt(sc.XT,4)}$ mΩ<br>
-    F1(분기 시작점) 최대단락: <b>${fmt(sc.IF1max,0)}A</b> / F2(분기 끝점) 최소단락: <b>${fmt(sc.IF2min,0)}A</b><br>
+    F1(분기 시작점) 최대단락: <b>${fmt(sc.IF1max,0)}A</b> / F2(분기 끝점) 최대 <b>${fmt(sc.IF2max,0)}A</b>·최소 <b>${fmt(sc.IF2min,0)}A</b><br>
     차단용량: $I_{cu}\\ge${fmt(sc.IF1max,0)}\\times1.25=${fmt(sc.IF1max*1.25/1000,2)}$kA → <b>${Icu} kA</b>
-    <h3>5. 운전 전압강하</h3>
+    <h3>5. 보호도체 (${pe.mode==='table'?'표 142.3-1':'142.3.2 지락전류 계산'})</h3>
+    ${peBasis(pe,S,sc.IF2max)}
+    <h3>6. 운전 전압강하 검증</h3>
     ${cable} ${S}㎟ R=${sc.rx[0]}, X=${sc.rx[1]} Ω/km
     $$e=\\frac{${phase===3?'\\sqrt3':'2'}\\cdot${fmt(IB,1)}\\cdot${L/1000}\\cdot(${sc.rx[0]}\\cdot${cos}+${sc.rx[1]}\\cdot${fmt(sinT,3)})}{${V}}\\times100=${fmt(e_run,3)}\\%$$`;
   if ($('G_basis').classList.contains('show') && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([$('G_basis')]);
 }
 
 // =================================================================
-// 전동기 분기 계산 (M)
+// 전동기 분기 계산 (M) — ① 부하·기동전류 → ② 차단기 → ③ 케이블 → ④ 단락·PE → ⑤ 검증
 // =================================================================
+function updateOptUI(){
+  const yd = $('M_start').value==='Y-Δ';
+  const lamMode = /^(Soft Start|Inverter)/.test($('M_start').value);
+  $('M_optC').disabled = lamMode;
+  $('M_rowYD').style.display = yd ? '' : 'none';
+  $('M_rowTc').style.display = (yd && $('M_optYD').value==='1') ? '' : 'none';
+}
 function calcM(){
+  updateOptUI();
   const phase=+$('M_phase').value, V=+$('M_V').value;
   const P=+$('M_P').value, eff=+$('M_eff').value, cos=+$('M_cos').value;
   const mode=$('M_start').value;
@@ -481,53 +599,61 @@ function calcM(){
   const cores=+$('M_cores').value, arr=$('M_arr').value;
   const L=+$('M_L').value, Ta=+$('M_Ta').value, Nc=+$('M_Nc').value;
   const emax=+$('M_emax').value, emaxSt=+$('M_emaxSt').value;
+  const useC = $('M_optC').value==='1', useYD = $('M_optYD').value==='1', transferCos=+$('M_transferCos').value;
   const sq3=Math.sqrt(3), k=phase===3?sq3:1, Ks=143, aM=1.25;
 
-  // 1. 설계전류·기동전류
+  // ① 부하: 설계전류, 실제 기동전류 배율
   const IB = P/(k*V/1000*eff*cos);
   const C  = startC(mode);
-  const isCurrentLimit = mode.startsWith('Soft Start')||mode.startsWith('Inverter');
-  // 운전 기동전류 (전압강하용)
-  // Soft Start·Inverter는 λ만 사용, 그 외는 β·C
-  const Ims = isCurrentLimit ? IB*beta*C : IB*beta*C;  // C 정의가 normalized라 동일 식
-  // 단락돌입
-  const Iinrush = Ims*krush;
+  const isInv  = mode.startsWith('Inverter');
+  const isSoft = mode.startsWith('Soft Start');
+  const isLam  = isInv || isSoft;
+  const lam = isLam ? parseFloat(mode.split(' ').pop()) : 0;  // 전류제한 λ (Soft Start·Inverter): 선택값 그대로
+  const mStart = isLam ? lam : beta*C;               // 실제 기동전류 배율 (I_ms/I_B)
+  const Ims = IB*mStart;
+  // 과부하 보호장치·기동온도 기준에 쓰는 배율 (옵션)
+  //  Soft Start·Inverter: 전류제한값 λ (β·C 적용 대상 아님, 옵션 무관)
+  //  그 외: 적용 → β·C / 미적용(서적판) → β
+  const mOv = isLam ? lam : (useC ? mStart : beta);
+  const mOvTxt = isLam ? '\\lambda' : (useC ? '\\beta\\cdot C' : '\\beta');
 
-  // 2. 차단기 정격
+  // ② 차단기: 설계 / 기동(과부하) / 돌입
   const In_design = D.helpers.nextIn('MCCB', IB);
-  const In_start  = D.helpers.nextIn('MCCB', IB*beta/gamma);
+  const In_start  = D.helpers.nextIn('MCCB', IB*mOv/gamma);
+  const Iy = Ims*krush;                              // 기동방식별 돌입(Y 기동 포함)
+  let Iyd = 0, kappa=0, Ktrans=0, RXt=0;             // Y-Δ 전환 돌입 (옵션)
+  const ydOn = (mode==='Y-Δ' && useYD);
+  if (ydOn){
+    kappa = 1+1/sq3;
+    RXt = transferCos/Math.sqrt(Math.max(1e-9,1-transferCos**2));
+    Ktrans = 1.02+0.98*Math.exp(-3*RXt);
+    Iyd = IB*beta*kappa*Ktrans;
+  }
+  const Iinrush = Math.max(Iy, Iyd);
   const In_inrush = D.helpers.nextIn('MCCB', Iinrush*aM/delta);
   const In = Math.max(In_design, In_start, In_inrush);
 
-  // 3. 케이블 (3기준)
-  const Ka = D.AMBIENT_TEMP.XLPE[Ta] ?? 1;
-  const grp = D.GROUP_REDUCTION[LG[wiring]] || [];
-  const Kg = grp[Nc-1] ?? 1;
-  const Ktot = Ka*Kg;
-  const izTbl = D.ALLOWABLE_CURRENT.XLPE[izKey(phase,cores)][izCol(wiring,arr)] || {};
-  const iz={}; for(const s of SIZES) if(izTbl[s]) iz[s]=izTbl[s]*Ktot;
-  const selSize=(req)=>{ for(const s of SIZES) if(iz[s]&&iz[s]>=req) return s; return SIZES.at(-1); };
-  const calcSize=(req)=>{ for(const s of SIZES) if(s>=req) return s; return SIZES.at(-1); };
-
-  const S_iz   = selSize(In);
+  // ③ 케이블: Iz≥In, 전압강하, 기동온도
+  const iz = izTable(phase,cores,wiring,arr,Ta,Nc);
+  const S_iz = selSizeBy(iz,In);
   const Kw = (phase===1) ? 35.6 : 30.8;
   const Sv = Kw*IB*L/(1000*V*emax/100);
-  const S_drop = calcSize(Sv);
-  const Sst = IB*beta*Math.sqrt(tm)/Ks*aM;
-  const S_temp = calcSize(Sst);
+  const S_drop = calcSizeUp(Sv);
+  const Sst = IB*mOv*Math.sqrt(tm)/Ks*aM;
+  const S_temp = calcSizeUp(Sst);
   const S = Math.max(S_iz, S_drop, S_temp, 2.5);
   const Iz = iz[S] ?? 0;
 
-  // 4. 단락전류·차단용량
+  // ④ 단락전류·차단용량·보호도체
   const sc = shortCircuit(phase, V, S, cable, cores, arr, L);
   const Icu = D.helpers.nextIcu('MCCB', sc.IF1max*1.25/1000);
+  const pe = peSize(S, sc.IF2max);
 
-  // 5. 전압강하 (운전·기동)
+  // ⑤ 검증: 전압강하 (운전·기동)
   const sinT=Math.sqrt(Math.max(0,1-cos*cos));
   const sinS=Math.sqrt(Math.max(0,1-cosS*cosS));
   const e_run = k*IB*(L/1000)*(sc.rx[0]*cos+sc.rx[1]*sinT)/V*100;
   const e_st  = k*Ims*(L/1000)*(sc.rx[0]*cosS+sc.rx[1]*sinS)/V*100;
-
   const ok_coord = IB<=In && In<=Iz;
   const ok_e = e_run<=emax;
   const ok_eSt = e_st<=emaxSt;
@@ -537,28 +663,39 @@ function calcM(){
   $('M_R_In').textContent  = In+' A';
   $('M_R_S').textContent   = cable+' '+S+'㎟';
   $('M_R_Icu').textContent = Icu+' kA';
+  $('M_R_PE').textContent  = PE_CFG.name+' '+pe.S+'㎟';
   $('M_R_judge').innerHTML =
     `보호협조 I<sub>B</sub>(${fmt(IB,1)})≤I<sub>n</sub>(${In})≤I<sub>z</sub>(${fmt(Iz,0)}) — `+
     `<span class="${ok_coord?'pass':'fail'}">${ok_coord?'적정':'부적정'}</span> / `+
     `운전강하 ${fmt(e_run,2)}% — <span class="${ok_e?'pass':'fail'}">${ok_e?'적정':'부적정'}</span> / `+
     `기동강하 ${fmt(e_st,2)}% — <span class="${ok_eSt?'pass':'fail'}">${ok_eSt?'적정':'부적정'}</span>`;
-  $('M_warn').innerHTML = warnBox(In, true, P);
+  $('M_warn').innerHTML = phaseWarn(phase, true, P) + warnBox(In, true, P);
 
+  const optTxt = `기동방식 계수 ${isLam?'해당 없음(전류제한 λ)':(useC?'적용':'미적용(서적판)')} / Y-Δ 전환 돌입 ${mode==='Y-Δ'?(useYD?'고려':'미고려'):'해당 없음'} / PE ${Common.pe==='table'?'표 142.3-1':'지락전류 계산'}`;
   $('M_basis_inner').innerHTML = `
-    <h3>1. 설계전류·기동전류</h3>
+    <div class="note">적용 옵션: ${optTxt}</div>
+    <h3>1. 부하 — 설계전류·기동전류</h3>
     $$I_B=\\frac{${P}}{${phase===3?'\\sqrt3\\cdot':''}\\,${V/1000}\\cdot${eff}\\cdot${cos}}=${fmt(IB,2)}\\text{ A}$$
-    $$I_{ms}=I_B\\cdot\\beta\\cdot C=${fmt(IB,2)}\\times${beta}\\times${C.toFixed(4)}=${fmt(Ims,1)}\\text{ A}\\ \\ (기동방식: ${mode})$$
+    ${isLam
+      ? `$$I_{ms}=I_B\\cdot\\lambda=${fmt(IB,2)}\\times${lam.toFixed(2)}=${fmt(Ims,1)}\\text{ A}\\ \\ (기동방식: ${mode})$$`
+      : `$$I_{ms}=I_B\\cdot\\beta\\cdot C=${fmt(IB,2)}\\times${beta}\\times${C.toFixed(4)}=${fmt(Ims,1)}\\text{ A}\\ \\ (기동방식: ${mode})$$`}
     <h3>2. 차단기 선정 (3기준 최댓값)</h3>
-    (a) 설계전류 → ${In_design}A &nbsp; (b) 기동전류 $I_B·β/γ=${fmt(IB*beta/gamma,1)}$A → ${In_start}A &nbsp; (c) 돌입 $I_{rush}·a/δ=${fmt(Iinrush*aM/delta,1)}$A → ${In_inrush}A<br>
+    (a) 설계전류 → ${In_design}A<br>
+    (b) 기동전류(과부하): $I_n\\ge I_B\\cdot ${mOvTxt}/\\gamma=${fmt(IB,2)}\\times${fmt(mOv,3)}/${gamma}=${fmt(IB*mOv/gamma,1)}$A → ${In_start}A<br>
+    (c) 돌입: $I_{rush}=I_{ms}\\cdot k_{rush}=${fmt(Ims,1)}\\times${krush}=${fmt(Iy,0)}$A${ydOn?`<br>
+    &nbsp;&nbsp;&nbsp;Y-Δ 전환 돌입: $\\kappa=${fmt(kappa,4)}$, $K=1.02+0.98e^{-3\\times${fmt(RXt,4)}}=${fmt(Ktrans,4)}$, $I_{YD}=I_B\\cdot\\beta\\cdot\\kappa\\cdot K=${fmt(IB,2)}\\times${beta}\\times${fmt(kappa,3)}\\times${fmt(Ktrans,3)}=${fmt(Iyd,0)}$A`:''}<br>
+    &nbsp;&nbsp;&nbsp;$I_n\\ge\\dfrac{${fmt(Iinrush,0)}\\times${aM}}{${delta}}=${fmt(Iinrush*aM/delta,1)}$A → ${In_inrush}A<br>
     <b>→ $I_n=\\max=${In}$ A</b>
     <h3>3. 케이블 선정 (3기준 최댓값)</h3>
     (a) 보호협조 $I_z\\ge I_n$ → ${S_iz}㎟<br>
     (b) 전압강하 $S_v=${fmt(Sv,2)}$㎟ → ${S_drop}㎟<br>
-    (c) 기동온도 $S_{st}=I_B·β·\\sqrt{t_m}/K·a=${fmt(Sst,2)}$㎟ → ${S_temp}㎟<br>
+    (c) 기동온도 $S_{st}=I_B\\cdot ${mOvTxt}\\cdot\\sqrt{t_m}/K\\cdot a=${fmt(Sst,2)}$㎟ → ${S_temp}㎟<br>
     <b>→ $S=\\max=${S}$㎟</b> ($I_z=${fmt(Iz,0)}$A)
-    <h3>4. 단락전류 (변압기 직결 가정)</h3>
-    F1 최대 <b>${fmt(sc.IF1max,0)}A</b> / F2 최소 <b>${fmt(sc.IF2min,0)}A</b> / $I_{cu}\\ge${fmt(sc.IF1max*1.25/1000,2)}$kA → <b>${Icu} kA</b>
-    <h3>5. 전압강하</h3>
+    <h3>4. 단락전류·차단용량 (변압기 직결 가정)</h3>
+    F1 최대 <b>${fmt(sc.IF1max,0)}A</b> / F2 최대 <b>${fmt(sc.IF2max,0)}A</b>·최소 <b>${fmt(sc.IF2min,0)}A</b> / $I_{cu}\\ge${fmt(sc.IF1max*1.25/1000,2)}$kA → <b>${Icu} kA</b>
+    <h3>5. 보호도체 (${pe.mode==='table'?'표 142.3-1':'142.3.2 지락전류 계산'})</h3>
+    ${peBasis(pe,S,sc.IF2max)}
+    <h3>6. 전압강하 검증</h3>
     운전: $e=\\frac{${phase===3?'\\sqrt3':'2'}·${fmt(IB,1)}·${L/1000}·(${sc.rx[0]}·${cos}+${sc.rx[1]}·${fmt(sinT,3)})}{${V}}·100=${fmt(e_run,3)}\\%$<br>
     기동: $e_{st}=${fmt(e_st,3)}\\%$ (허용 ${emaxSt}%)`;
   if ($('M_basis').classList.contains('show') && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([$('M_basis')]);

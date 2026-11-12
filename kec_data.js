@@ -483,3 +483,194 @@ window.KEC_DATA.helpers = {
 };
 
 if (typeof module !== 'undefined') module.exports = window.KEC_DATA;
+
+//============================================================
+// 7. 단락보호용 보호장치 동작시간 t_n (특성곡선 수치화, 2026-10-28)
+//   - MCCB(ABN/EBN, 3~800A): 제조사 카탈로그 곡선(그림)의 '최대값' 곡선을 픽셀 판독해 수치화한 근사값 (판독 오차 있음)
+//   - thermal: [배수 δ=I/In, 최대 동작시간 s] (log-log 보간) / xM: 순시 상한 배수 / tail: δ≥xM 구간 최대전차단시간
+//============================================================
+window.KEC_DATA.MCCB_CURVE = {
+  ranges: {
+    '3-32A': { label:'3~32A', xM:14.4, thermal:[[1.2, 13794.336], [1.3, 7516.243], [1.5, 1671.264], [2, 248.217], [3, 88.501], [4, 47.463], [5, 30.387], [6, 22.032], [7, 17.241], [8, 14.101], [9, 11.051], [10, 9.784], [11, 8.151], [12, 7.165], [13, 6.436], [14, 5.766], [15, 5.189], [17, 4.132], [20, 3.002], [22.5, 2.309], [26, 1.323]], tail:[[14.4, 0.03], [28.8, 0.0217], [43.2, 0.0147], [72.0, 0.0132], [100.0, 0.0124]] },
+    '40-100A': { label:'40~100A', xM:14.4, thermal:[[1.2, 9319.337], [1.3, 4233.513], [1.5, 726.849], [2, 240.351], [3, 88.434], [4, 46.659], [5, 29.456], [6, 21.658], [7, 16.617], [8, 12.63], [9, 9.949], [10, 7.607], [11, 6.148], [12, 4.743], [13, 3.444], [14, 2.204], [14.39, 1.893]], tail:[[14.4, 0.03], [16.56, 0.0266], [20.16, 0.0173], [28.8, 0.0159], [43.2, 0.0146], [72.0, 0.0129], [100.0, 0.012]] },
+    '100-225A': { label:'100~225A', xM:14.2, thermal:[[1.2, 10434.562], [1.3, 3158.45], [1.5, 943.004], [2, 314.958], [3, 112.81], [4, 56.333], [5, 32.834], [6, 22.235], [7, 16.281], [8, 11.887], [9, 8.97], [10, 6.64], [11, 4.616], [12, 3.04], [13, 1.828], [14.19, 0.904]], tail:[[14.2, 0.03], [16.33, 0.0171], [19.88, 0.015], [28.4, 0.0147], [42.6, 0.0144], [71.0, 0.0137], [100.0, 0.0134]] },
+    '250-400A': { label:'250~400A', xM:12.0, thermal:[[1.2, 9295.575], [1.3, 4194.175], [1.5, 1855.498], [2, 640.287], [3, 204.369], [4, 102.756], [5, 60.596], [6, 41.884], [7, 30.381], [8, 23.571], [9, 18.915], [10, 14.581], [11, 10.366], [11.99, 6.84]], tail:[[12.0, 0.03], [13.8, 0.0136], [16.8, 0.0136], [24.0, 0.0127], [36.0, 0.0122], [60.0, 0.0118], [100.0, 0.0112]] },
+    '500-800A': { label:'500~800A', xM:12.0, thermal:[[1.2, 11827.485], [1.3, 4567.753], [1.5, 1971.878], [2, 684.038], [3, 244.424], [4, 139.218], [5, 91.162], [6, 62.031], [7, 46.57], [8, 35.535], [9, 26.632], [10, 20.81], [11, 17.151], [11.99, 13.397]], tail:[[12.0, 0.03], [13.8, 0.0202], [16.8, 0.016], [24.0, 0.013], [36.0, 0.0125], [60.0, 0.0119], [100.0, 0.0114]] }
+  },
+  // 3~32A 15A 이상은 순시 400A±20% → 상한 배수 = 480/In (3~10A는 14.4배)
+  rangeOf(In){
+    if (In <= 32) return '3-32A';
+    if (In <= 100) return '40-100A';
+    if (In <= 225) return '100-225A';
+    if (In <= 400) return '250-400A';
+    if (In <= 800) return '500-800A';
+    return null;
+  }
+};
+
+// 주택용 MCB(IEC 60898-1, 30 ℃) 최대값 곡선 수치화: B(순시 3~5배) / C(5~10배) / D(10~20배)
+// thermal: 최대값 곡선 [배수, 최대 동작시간 s], xv: 순시 상한 배수(곡선이 수직으로 떨어지는 지점), 순시 영역 최대전차단시간 0.02 s
+window.KEC_DATA.MCB_CURVE = {
+  thermal: [[1.5,1425],[1.6,728],[1.8,332],[2,186],[2.5,72],[3,37.7],[3.5,24.3],[4,16.8],[4.5,12.4],[5,9.86],[6,6.81],[7,5.28],[8,4.29],[9,3.65],[10,3.17],[12,2.46],[15,1.95],[18,1.62],[20,1.48]],
+  xv: {B:5, C:10, D:20},
+  tInst: 0.02
+};
+(function(){
+  const D = window.KEC_DATA;
+  function interp(pts, x){   // log-log 보간 (범위 밖은 끝점 연장)
+    if (x <= pts[0][0]) return pts[0][1];
+    for (let i = 1; i < pts.length; i++){
+      if (x <= pts[i][0]){
+        const [x0,y0] = pts[i-1], [x1,y1] = pts[i];
+        const f = (Math.log(x)-Math.log(x0))/(Math.log(x1)-Math.log(x0));
+        return Math.exp(Math.log(y0)+f*(Math.log(y1)-Math.log(y0)));
+      }
+    }
+    const [xa,ya] = pts[pts.length-2], [xb,yb] = pts[pts.length-1];
+    const s = (Math.log(yb)-Math.log(ya))/(Math.log(xb)-Math.log(xa));
+    return Math.exp(Math.log(yb)+s*(Math.log(x)-Math.log(xb)));
+  }
+  const nf = (v,d) => Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d,useGrouping:false});
+  const sig = v => v >= 1 ? nf(v,2) : (v >= 0.1 ? nf(v,2) : nf(v,3));
+
+
+  // 곡선 이미지 보정값: file, 원본 크기, x(1배)·x(100배) 픽셀, y(240분)·y(0.01s) 픽셀
+  const CIMG = {
+    '3-32A':   {f:'curve/MCCB_3-32A.png',   w:720, h:960, x1:140,   x2:701,   yt:18,   yb:883},
+    '40-100A': {f:'curve/MCCB_40-100A.png', w:720, h:960, x1:135,   x2:694,   yt:21,   yb:881},
+    '100-225A':{f:'curve/MCCB_100-225A.png',w:720, h:960, x1:138,   x2:700,   yt:19,   yb:876},
+    '250-400A':{f:'curve/MCCB_250-400A.png',w:720, h:960, x1:130,   x2:696.5, yt:13,   yb:886},
+    '500-800A':{f:'curve/MCCB_500-800A.png',w:630, h:873, x1:112.5, x2:615,   yt:17.5, yb:790.5},
+    'MCB':     {f:'curve/MCB_IEC60898.png', w:523, h:708, x1:109,   x2:507,   yt:35,   yb:648}
+  };
+  function curveImg(key, label, delta, tn, W0, cap){
+    const c = CIMG[key], W = W0 || 300, k = W/c.w, H = Math.round(c.h*k);
+    const dx = (c.x2-c.x1)/2, dy = (c.yb-c.yt)/Math.log10(14400/0.01);
+    let ov = '';
+    if (delta >= 1 && delta <= 100 && tn != null && tn >= 0.01){
+      const px = (c.x1 + dx*Math.log10(delta))*k, py = (c.yb - dy*Math.log10(tn/0.01))*k;
+      const top = c.yt*k, bot = c.yb*k, left = c.x1*k;
+      ov = '<div style="position:absolute;left:'+px.toFixed(1)+'px;top:'+top.toFixed(1)+'px;height:'+(bot-top).toFixed(1)+'px;border-left:1.5px dashed #e00000"></div>' +
+           '<div style="position:absolute;left:'+left.toFixed(1)+'px;top:'+py.toFixed(1)+'px;width:'+(px-left).toFixed(1)+'px;border-top:1.5px dashed #e00000"></div>' +
+           '<div style="position:absolute;left:'+(px-4).toFixed(1)+'px;top:'+(py-4).toFixed(1)+'px;width:8px;height:8px;border-radius:50%;background:#e00000"></div>';
+    }
+    return '<div style="text-align:center;margin:6px 0"><div style="position:relative;display:inline-block;width:'+W+'px;height:'+H+'px;line-height:0">' +
+           '<img src="'+c.f+'" width="'+W+'" height="'+H+'" alt="'+label+'" style="display:block">' + ov + '</div>' +
+           '<div style="font-size:9px;color:#6b7280;line-height:1.4">그림. ' + label + (cap ? ' — ' + cap : ' — 붉은 점선: 차단배율 δ = ' + nf(delta,1) + ', t<sub>n</sub> ≈ ' + sig(tn) + ' s') +
+           (key === 'MCB' ? '' : '<br>※ 그림의 색상 표시(소프트스타터·Y-Δ·직입)는 카탈로그 원본의 기동시간 참고 표기') + '</div></div>';
+  }
+
+  /** 규약동작배율 γ 확인용 곡선 그림 — 최소동작시간 t_min 과 γ 의 교점 표시 (과부하·기동전류 기준). ACB 등 곡선 이미지가 없으면 '' */
+  D.helpers.gammaFig = function(type, In, gamma, tmin, W, curve){
+    let key = null, label = '';
+    if (type === 'MCCB' && D.MCCB_CURVE.rangeOf(In)) { key = D.MCCB_CURVE.rangeOf(In); label = 'MCCB 동작특성곡선 ' + D.MCCB_CURVE.ranges[key].label + ' (제조사 카탈로그)'; }
+    else if (type === 'MCB-house') { key = 'MCB'; label = '주택용 MCB 동작특성곡선 (IEC 60898-1, Type-' + (curve||'C').toUpperCase() + ')'; }
+    if (!key || !CIMG[key]) return '';
+    return curveImg(key, label, gamma, tmin, W,
+      '붉은 점선: 최소동작시간 t<sub>min</sub> = ' + nf(tmin,1) + ' s 와 곡선 교점 아래측(하한 곡선) 전류배율 γ = ' + nf(gamma,2) + ' 배 — 곡선에서 γ 확인');
+  };
+
+  /** 단락보호 동작시간 t_n 산정. 반환 {tn, region, src}  (tn=null 이면 산정 불가) */
+  D.helpers.tnShort = function(type, In, delta, curve){
+    if (type === 'MCCB'){
+      const key = D.MCCB_CURVE.rangeOf(In);
+      if (!key) return {tn:null, region:'-', src:'In 800A 초과: 제조사 곡선 확인 필요'};
+      const R = D.MCCB_CURVE.ranges[key];
+      let xM = R.xM;
+      if (key === '3-32A' && In >= 15) xM = 480/In;       // 순시 400A ±20% 상한
+      const name = '산업용 MCCB 특성곡선 ' + R.label + ' 최대값 곡선';
+      if (delta >= xM){
+        return {tn: interp(R.tail, Math.min(delta,100)), region:'순시 트립 영역 (δ ≥ ' + nf(xM,1) + ')', src:name + ' 순시·최대전차단시간'};
+      }
+      return {tn: interp(R.thermal, Math.max(delta,1.2)), region:'반한시(열동) 영역 (δ < ' + nf(xM,1) + ')', src:name + ' 판독', reading:true};
+    }
+    if (type === 'MCB-house'){
+      const c = (curve||'C').toUpperCase(), M = D.MCB_CURVE;
+      const up = M.xv[c] || 10;
+      if (delta >= up) return {tn:M.tInst, region:'순시 영역 (δ ≥ ' + up + ', Type-' + c + ')', src:'MCB 동작특성곡선(IEC 60898-1, 30 ℃) 최대전차단시간 0.02 s'};
+      return {tn: interp(M.thermal, Math.max(delta,1.5)), region:'반한시(열동) 영역 (δ < ' + up + ', Type-' + c + ')', src:'MCB 동작특성곡선(IEC 60898-1, 30 ℃) 최대값 곡선 판독', reading:true};
+    }
+    if (type === 'ACB') return {tn:0.1, region:'단시간/순시 설정 가정', src:'ACB 설정값 가정 0.1 s (제조사 곡선·협조 설정 확인)', assumed:true};
+    return {tn:null, region:'-', src:'제조사 특성곡선 확인 필요'};
+  };
+
+  /** 단락보호 평가(서적 절차: 종류→In→I_F2min→차단배율→t_n→t_z→판정). o:{type,name,In,IF2,Seff,Np,K,curve}
+   *  반환 {delta,tz,tn,ok,html} */
+  D.helpers.shortProt = function(o){
+    const delta = o.IF2/o.In;
+    const tz = Math.pow(o.Seff*o.K/o.IF2, 2);
+    let t = D.helpers.tnShort(o.type, o.In, delta, o.curve);
+    // 서적 판독값(선택): 책이 순시 구간으로 보는 배율(dMin) 이상이면 책의 곡선 판독값을 적용 (o.tnBook = {dMin, tn, src})
+    if (o.tnBook && t.reading && delta >= o.tnBook.dMin) t = {tn:o.tnBook.tn, region:'순시 영역 (δ ≥ ' + o.tnBook.dMin + ', 서적 판독)', src:o.tnBook.src};
+    const ok = t.tn != null && t.tn < tz;
+    const Sx = o.Np && o.Np > 1 ? (o.Seff/o.Np) + '\\times' + o.Np : String(o.Seff);
+    const tnTxt = t.tn == null ? '(곡선 확인 필요)' : '$t_n \\approx ' + sig(t.tn) + '$ s';
+    const judge = t.tn == null
+      ? '<span class="judge-no">특성곡선 확인 필요</span>'
+      : '$t_n(' + sig(t.tn) + ') ' + (ok ? '<' : '\\ge') + ' t_z(' + sig(tz) + ')$ — <span class="' + (ok ? 'judge-ok' : 'judge-no') + '">' + (ok ? '적정' : '부적정') + '</span>';
+    const html =
+      '<div class="sh2">' + (o.title || '단락 보호 평가') + '</div>' +
+      '<div>가. 보호장치: ' + (o.name || o.type) + ', 정격전류 $I_n = ' + o.In + '$ A</div>' +
+      '<div>나. 최소 단락전류(F2, 도체 250 ℃): $I_{F2,min} = ' + nf(o.IF2,0) + '$ A</div>' +
+      '<div>다. 차단배율: $$\\delta = \\frac{I_{F2,min}}{I_n} = \\frac{' + nf(o.IF2,0) + '}{' + o.In + '} = ' + nf(delta,1) + '$$</div>' +
+      '<div>라. 보호장치 동작시간 ' + tnTxt + ' — ' + t.region + '<br><span style="color:#6b7280">근거: ' + t.src + '</span></div>' +
+      (!(t.reading || o.showImg) ? '' : o.type === 'MCCB' && D.MCCB_CURVE.rangeOf(o.In) ? curveImg(D.MCCB_CURVE.rangeOf(o.In), 'MCCB 동작특성곡선 ' + D.MCCB_CURVE.ranges[D.MCCB_CURVE.rangeOf(o.In)].label + ' (제조사 카탈로그)', delta, t.tn, o.imgW) : (o.type === 'MCB-house' ? curveImg('MCB', '주택용 MCB 동작특성곡선 (IEC 60898-1, Type-' + (o.curve||'C').toUpperCase() + ' 순시영역 표시)', delta, t.tn, o.imgW) : '')) +
+      '<div>마. 케이블 단락 허용시간: $$t_z = \\left(\\frac{' + Sx + ' \\times ' + o.K + '}{' + nf(o.IF2,0) + '}\\right)^2 = ' + sig(tz) + '\\text{ s}$$</div>' +
+      '<div>바. 판정: ' + judge + '</div>';
+    return {delta:delta, tz:tz, tn:t.tn, ok:ok, region:t.region, src:t.src, html:html};
+  };
+})();
+
+//============================================================
+// 8. 핵심 판정 박스 (과부하 보호 2대 조건) — 결과 화면/산출근거 최종 결과 상단 강조용
+//   ① I_B ≤ I_n ≤ I_z   ② I_2 ≤ 1.45·I_z   (KEC 212.4.1)
+//============================================================
+(function(){
+  const H = window.KEC_DATA.helpers;
+  const nf = (v,d) => Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d,useGrouping:false});
+  /** o:{IB,In,Iz,I2,Iz145}  반환 HTML 문자열 (MathJax 불필요) */
+  H.keyJudge = function(o){
+    const ok1 = o.IB <= o.In && o.In <= o.Iz;
+    const ok2 = o.I2 <= o.Iz145;
+    const k = o.In > 0 ? o.I2/o.In : 1.45;
+    const col = ok => ok ? '#067647' : '#b42318';
+    const bg  = ok => ok ? '#ecfdf3' : '#fef3f2';
+    const badge = ok => '<span style="display:inline-block;padding:1px 10px;border-radius:12px;color:#fff;background:'+col(ok)+';font-weight:bold;font-size:12px;margin-left:8px;white-space:nowrap">'+(ok?'적정':'부적정')+'</span>';
+    const sub = s => '<sub>'+s+'</sub>';
+    const num = (s,c) => '<span style="color:'+c+'">'+s+'</span>';
+    let why1 = '';
+    if (!ok1){
+      if (o.IB > o.In) why1 += '<div style="color:#b42318;font-size:12px;margin-top:3px">▶ I'+sub('n')+' 값이 I'+sub('B')+' 값 미만이므로 부적정합니다.</div>';
+      if (o.In > o.Iz) why1 += '<div style="color:#b42318;font-size:12px;margin-top:3px">▶ I'+sub('z')+' 값이 I'+sub('n')+' 값 미만이므로 부적정합니다.</div>';
+    }
+    const why2 = ok2 ? '' : '<div style="color:#b42318;font-size:12px;margin-top:3px">▶ I'+sub('2')+' 값이 1.45I'+sub('z')+' 값을 초과하므로 부적정합니다.</div>';
+    const row = (ok, title, line, why) =>
+      '<div style="border:2px solid '+col(ok)+';background:'+bg(ok)+';border-radius:6px;padding:7px 12px;margin:6px 0">' +
+      '<div style="font-size:11px;color:#475467;margin-bottom:2px">'+title+'</div>' +
+      '<div style="font-size:15px;font-weight:bold;line-height:1.5;color:#1d4ed8">'+line+badge(ok)+'</div>'+why+'</div>';
+    if (o.noI2){   // MCB 등 I2=1.45·In 인 경우: ①을 만족하면 ②는 자동 충족 → 별도 박스 생략, 안내 문구만
+      return '<div class="keyj" style="margin:10px 0">' +
+        row(ok1, '① 부하전류 I'+sub('B')+' ≤ 차단기 정격전류 I'+sub('n')+' ≤ 선도체 허용전류 I'+sub('z')+'  (KEC 212.4.1)',
+          'I'+sub('B')+' '+nf(o.IB,2)+' A ≤ I'+sub('n')+' '+nf(o.In,0)+' A ≤ I'+sub('z')+' '+nf(o.Iz,2)+' A', why1) +
+        '<div style="font-size:11px;color:#6b7280;margin:2px 2px 0">※ 차단기 규약 동작전류 I'+sub('2')+' = 1.45·I'+sub('n')+' 이므로, ①(I'+sub('n')+' ≤ I'+sub('z')+')을 만족하면 I'+sub('2')+' ≤ 1.45·I'+sub('z')+'는 자동으로 충족되어 별도 판정을 생략합니다.</div></div>';
+    }
+    return '<div class="keyj" style="margin:10px 0">' +
+      row(ok1, '① 부하전류 I'+sub('B')+' ≤ 차단기 정격전류 I'+sub('n')+' ≤ 선도체 허용전류 I'+sub('z')+'  (KEC 212.4.1)',
+        'I'+sub('B')+' '+nf(o.IB,2)+' A ≤ I'+sub('n')+' '+nf(o.In,0)+' A ≤ I'+sub('z')+' '+nf(o.Iz,2)+' A', why1) +
+      row(ok2, '② 차단기 규약 동작전류 I'+sub('2')+' ≤ 1.45 × 허용전류 I'+sub('z')+'  (KEC 212.4.1)',
+        'I'+sub('2')+' ('+nf(k,2).replace(/\.?0+$/,'')+'×'+nf(o.In,0)+') '+nf(o.I2,2)+' A ≤ 1.45I'+sub('z')+' '+nf(o.Iz145,2)+' A', why2) +
+      '</div>';
+  };
+})();
+
+//============================================================
+// 9. 보호장치 규약동작전류 계수 (표 5-18)  I2 = k·In
+//   주택용(MCB): 63A 이하 1.45 / 63A 초과 1.52
+//   산업용(MCCB·ACB): 63A 이하 1.3 / 63A 초과 1.37
+//============================================================
+(function(){
+  window.KEC_DATA.helpers.i2k = function(type, In){
+    const house = /^MCB/.test(String(type||''));
+    return house ? (In <= 63 ? 1.45 : 1.52) : (In <= 63 ? 1.3 : 1.37);
+  };
+})();

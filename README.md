@@ -8,6 +8,10 @@
 3. 내 부하로 계산하려면 `finder/index.html`에서 조건을 입력해 계산서를 고릅니다.
 4. 같은 조건을 `practical/index.html`에도 넣고 결과를 비교합니다. 비교 방법은 `guide.html`에 있습니다.
 
+## 구성
+- 서적판 12종: `g1~g5.html`(비전동기), `m1~m7.html`(전동기)
+- 실무판: `practical/index.html` (계산 순서 부하 → 차단기 → 케이블 → 보호도체, 계산 옵션 선택 가능)
+
 ## 주의
 - 폴더 구조를 바꾸지 마세요. `kec_data.js`, `print_engine.js`를 상대 경로로 불러옵니다.
 - 산출근거의 수식 표시(MathJax)는 인터넷 연결이 필요합니다.
