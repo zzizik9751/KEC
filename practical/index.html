@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>KEC 분기회로 단순화 계산서 (실무판)</title>
+<title>분기회로 계산서 (KEC)</title>
 <script src="../kec_data.js"></script>
 <script src="../print_engine.js"></script>
 <style>
@@ -50,8 +50,9 @@
   @media print{
     body{padding:0;background:#fff;font-size:11px}
     .no-print,.tab-bar{display:none !important}
-    .main-only{display:none !important}
-    .tab-panel{display:block !important}
+    .main-only{display:block !important}
+    .tab-panel{display:none !important}
+    .tab-panel.active{display:block !important}
     .basis{display:block !important;border:1px solid #999;page-break-inside:avoid}
     @page{size:A4;margin:14mm}
   }
@@ -110,12 +111,64 @@ table{max-width:100%}
 .sel0 td{background:#e8f1ff!important}
 .izn{font-size:.85em;color:#6b7280;margin:2px 0 8px}
 </style>
+<style id="print-layout">
+.print-only{display:none}
+.cmp{display:none;background:#fffefa;border:2px solid #7c3aed;border-radius:8px;padding:12px;margin-top:12px}
+.cmp.show{display:block}
+.cmp h3{margin-top:0;color:#6d28d9;border-left-color:#7c3aed;background:none}
+.cmp .cmpchk{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:6px 0 8px}
+.cmp .cmpchk label{white-space:nowrap}
+.cmp table td,.cmp table th{padding:3px 5px}
+.cmp tr.cur td{background:#fff6d6;font-weight:700}
+.cmp tr.min td:first-child::after{content:" ★";color:#b54708}
+.cmp td.l{text-align:left}
+.btn.purple{background:#7c3aed}
+.bsec{margin:0}
+@media print{
+  #intro_txt,.common-status,#M_Psel_hint{display:none !important}
+  .print-only{display:block !important;margin:0 0 8px}
+  .print-only .pv{margin-top:3px;padding:5px 7px;border:1px solid var(--bd);border-radius:3px;font-size:12px;background:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .print-only .input-grid{margin-bottom:6px}
+  h1{margin:0 0 6px}
+  .basis{page-break-inside:auto !important;break-inside:auto !important;border:1px solid #999}
+  .bsec,.summary,.summary .box,.input-grid,.note,.warn-box,.cmp tr,.basis table tr,#M_R_judge,#G_R_judge,mjx-container[display="true"],#print_head{break-inside:avoid;page-break-inside:avoid}
+  .basis table,.cmp table{break-inside:auto}
+  thead{display:table-header-group}
+  .basis>h3,#M_basis_inner>.note,#G_basis_inner>.note{break-after:avoid;page-break-after:avoid}
+  h2,h3{break-after:avoid;page-break-after:avoid}
+  .cmp{display:none !important;border:1px solid #6d28d9;break-inside:auto}
+  .cmp.show{display:block !important;break-before:page;page-break-before:always;break-inside:avoid}
+  .cmp tr.cur td{background:#fff6d6 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card{border:0;padding:0}
+  /* 1쪽 압축: 입력 + 결과 요약이 한 장에 */
+  h1{font-size:17px !important;margin:0 0 4px !important;padding-bottom:4px !important}
+  h2{margin:6px 0 4px !important;padding:3px 10px !important;font-size:12px !important}
+  h3{margin:7px 0 3px !important;padding:3px 10px !important;font-size:11px !important}
+  .input-grid{gap:3px 8px !important}
+  .input-grid label{font-size:9.5px !important}
+  .input-grid input,.input-grid select{padding:1px 5px !important;font-size:10.5px !important;margin-top:1px !important;height:20px}
+  #print_head .input-grid{grid-template-columns:repeat(6,1fr) !important}
+  .print-only .pv{padding:1px 5px !important;font-size:10px !important;margin-top:1px !important}
+  #print_head{margin-bottom:2px}
+  .summary{grid-template-columns:repeat(6,1fr) !important;gap:5px !important}
+  .summary .box{padding:4px 3px !important}
+  .summary .box .v{font-size:11.5px !important}
+  .summary .box .l{font-size:9px !important;margin-bottom:2px !important}
+  #M_R_judge,#G_R_judge{margin-top:4px !important;font-size:10px}
+  .tab-panel .sub{margin-bottom:2px !important}
+}
+</style>
 </head>
 <body>
 
 <div class="card main-only">
-  <h1>KEC 분기회로 단순화 계산서 (실무판)</h1>
-  <div class="sub">계산순서: 부하 → 차단기 → 케이블 → 보호도체(PE). 계산 옵션(기동방식 계수·Y-Δ 전환 돌입·PE 기준)을 선택할 수 있으며, 옵션을 ‘미적용’으로 두면 서적판(M1~M5)과 같은 값이 산출됩니다. 산업용 MCCB·XLPE 케이블 단일도체 한정. 간선 임피던스는 변압기 직결 가정으로 단순화(보수적). 차단기 정격이 400A 초과 시 부하 분리 권고. <b>단상은 3.7kW(비전동기 3.7kVA)까지만 지원</b>하며, 초과 시 3상으로 선정하십시오.</div>
+  <h1>분기회로 계산서 (KEC)</h1>
+  <div class="sub" id="intro_txt">계산순서: 부하 → 차단기 → 케이블 → 보호도체(PE). 계산 옵션(기동방식 계수·Y-Δ 전환 돌입·PE 기준)을 선택할 수 있으며, 옵션을 ‘미적용’으로 두면 서적판(M1~M5)과 같은 값이 산출됩니다. 산업용 MCCB·XLPE 케이블 단일도체 한정. 간선 임피던스는 변압기 직결 가정으로 단순화(보수적). 차단기 정격이 400A 초과 시 부하 분리 권고. <b>단상은 3.7kW(비전동기 3.7kVA)까지만 지원</b>하며, 초과 시 3상으로 선정하십시오.</div>
+</div>
+
+<div id="print_head" class="print-only">
+  <h2>계산 조건 (공통)</h2>
+  <div class="input-grid" id="ph_grid"></div>
 </div>
 
 <div class="card main-only">
@@ -144,6 +197,11 @@ table{max-width:100%}
           <option>20</option><option>25</option><option>30</option><option>35</option>
           <option selected>40</option><option>45</option><option>50</option><option>55</option>
         </select></label>
+      <label>전동기 종류 <span style="font-size:11px;color:#6b7280">(효율·역률 자동)</span>
+        <select id="C_motor" onchange="onCommonChange()">
+          <option value="IE3" selected>고효율 (IE3)</option>
+          <option value="IE4">초고효율 (IE4)</option>
+        </select></label>
       <label>기본 케이블 (전 XLPE)
         <select id="C_cable" onchange="onCommonChange()">
           <option>HFIX</option><option>F-CV</option><option selected>HFCO</option>
@@ -167,7 +225,7 @@ table{max-width:100%}
           <option value="calc">지락전류 계산 (142.3.2)</option>
         </select></label>
     </div>
-    <div class="note">표 142.3-1: 선도체 S≤16㎟ → S, 16&lt;S≤35 → 16㎟, S&gt;35 → S/2. 계산식: S<sub>PE</sub>=I<sub>F2,max</sub>·√t<sub>n</sub>/K·a (t<sub>n</sub>=0.1 s, K=143, a=1.25). 두 방식 모두 보호도체 종류는 F-GV(PVC)로 가정.</div>
+    <div class="note">표 142.3-1: 선도체 S≤16㎟ → S, 16&lt;S≤35 → 16㎟, S&gt;35 → S/2. 계산식: S<sub>PE</sub>=I<sub>F2,max</sub>·√t<sub>n</sub>/K·a (t<sub>n</sub>=0.4 s, K=143, a=1.25). 두 방식 모두 보호도체 종류는 F-GV(PVC)로 가정.</div>
     <div class="note" style="margin-top:14px">
       <b>변압기 직결 가정</b>: 실무 단순화상 간선 임피던스는 무시합니다. 단락전류는 전원+변압기+분기케이블만으로 계산되어 보수적(약간 더 큰 값)으로 산출됩니다.
       이로 인해 차단기 차단용량(Icu)은 안전 마진이 약간 확보됩니다.
@@ -254,7 +312,7 @@ table{max-width:100%}
     <h3>부하 / 기동 조건</h3>
     <div class="input-grid">
       <label>전기방식 <span style="font-size:11px;color:#b54708">(단상은 3.7kW까지만 지원)</span>
-        <select id="M_phase" onchange="calcM()">
+        <select id="M_phase" onchange="motorAuto();calcM()">
           <option value="1">단상</option>
           <option value="3" selected>3상</option>
         </select></label>
@@ -262,9 +320,11 @@ table{max-width:100%}
         <select id="M_V" onchange="calcM()">
           <option>220</option><option selected>380</option>
         </select></label>
-      <label>정격출력 P (kW)<input id="M_P" type="number" step="0.1" value="45" oninput="calcM()"></label>
-      <label>효율 η<input id="M_eff" type="number" step="0.01" min="0" max="1" value="0.92" oninput="calcM()"></label>
-      <label>역률 cosθ<input id="M_cos" type="number" step="0.01" min="0" max="1" value="0.84" oninput="calcM()"></label>
+      <label>정격출력 P (kW) <span style="font-size:11px;color:#6b7280">(표준 용량)</span>
+        <select id="M_Psel" onchange="onPsel()"><option value="0.75">0.75</option><option value="1.1">1.1</option><option value="1.5">1.5</option><option value="2.2">2.2</option><option value="3.7">3.7</option><option value="5.5">5.5</option><option value="7.5">7.5</option><option value="11">11</option><option value="15">15</option><option value="18.5">18.5</option><option value="22">22</option><option value="30">30</option><option value="37">37</option><option value="45" selected>45</option><option value="55">55</option><option value="75">75</option><option value="90">90</option><option value="110">110</option><option value="132">132</option><option value="160">160</option><option value="200">200</option><option value="220">220</option><option value="250">250</option><option value="280">280</option><option value="315">315</option><option value="355">355</option><option value="x">직접 입력</option></select>
+        <input id="M_P" type="number" step="0.1" value="45" style="display:none;margin-top:4px" oninput="motorAuto();onStartChange()"></label>
+      <label>효율 η <span style="font-size:11px;color:#6b7280">(자동·수정 가능)</span><input id="M_eff" type="number" step="0.001" min="0" max="1" value="0.950" oninput="calcM()"></label>
+      <label>역률 cosθ <span style="font-size:11px;color:#6b7280">(자동·수정 가능)</span><input id="M_cos" type="number" step="0.01" min="0" max="1" value="0.86" oninput="calcM()"></label>
       <label>기동방식
         <select id="M_start" onchange="onStartChange()">
           <option>전전압</option>
@@ -281,7 +341,7 @@ table{max-width:100%}
       <label>규약동작배율 γ<input id="M_gamma" type="number" step="0.05" value="4.4" oninput="calcM()"></label>
       <label>순시차단배율 δ<input id="M_delta" type="number" step="0.5" value="10" oninput="calcM()"></label>
     </div>
-    <h3>계산 옵션 <span class="ref">서적판 대조용</span></h3>
+    <h3>계산 옵션</h3>
     <div class="input-grid">
       <label>기동방식 계수 C 적용
         <select id="M_optC" onchange="calcM()">
@@ -295,7 +355,7 @@ table{max-width:100%}
         </select></label>
       <label id="M_rowTc">Y-Δ 전환시 역률<input id="M_transferCos" type="number" step="0.01" min="0" max="1" value="0.50" oninput="calcM()"></label>
     </div>
-    <div class="note">C 적용 여부는 ‘과부하 보호장치 정격(기동전류 기준)’과 ‘기동온도 기준 케이블 굵기’에 함께 적용됩니다. 기동 전압강하·돌입전류는 실제 기동전류(I<sub>ms</sub>)를 사용합니다. Soft Start·Inverter는 전류제한 방식이므로 β·C를 적용하지 않고, 선택한 전류제한값 λ(I<sub>B</sub>의 배수)를 기동전류 배율로 사용합니다(이 옵션과 무관).</div>
+    <div class="note no-print">C 적용 여부는 ‘과부하 보호장치 정격(기동전류 기준)’과 ‘기동온도 기준 케이블 굵기’에 함께 적용됩니다. 기동 전압강하·돌입전류는 실제 기동전류(I<sub>ms</sub>)를 사용합니다. Soft Start·Inverter는 전류제한 방식이므로 β·C를 적용하지 않고, 선택한 전류제한값 λ(I<sub>B</sub>의 배수)를 기동전류 배율로 사용합니다(이 옵션과 무관).</div>
     <h3>배선·포설 조건</h3>
     <div class="input-grid">
       <label>케이블 종류
@@ -333,6 +393,7 @@ table{max-width:100%}
     <div style="margin-top:10px" class="no-print">
       <button class="btn" onclick="toggleBasisM()" id="M_basisBtn">산출근거 확인 ▼</button>
       <button class="btn green" onclick="printM()">인쇄 / PDF 저장</button>
+      <button class="btn purple" onclick="toggleCmp()" id="M_cmpBtn">기동방식 비교 ▼</button>
     </div>
     <div id="M_warn"></div>
     <h3 style="margin-top:14px">결과 요약</h3>
@@ -345,6 +406,11 @@ table{max-width:100%}
       <div class="box"><div class="l">보호도체 PE</div><div class="v" id="M_R_PE">-</div></div>
     </div>
     <div style="margin-top:8px" id="M_R_judge"></div>
+    <div class="cmp" id="M_cmp">
+      <h3>기동방식 비교 <span style="font-size:11px;font-weight:400;color:#6b7280">— 현재 입력(용량·효율·역률·β·k<sub>rush</sub>·γ·δ·배선조건)을 고정하고 기동방식만 바꿔 계산</span></h3>
+      <div class="cmpchk no-print" id="M_cmpChk"></div>
+      <div id="M_cmp_body"></div>
+    </div>
     <div class="basis" id="M_basis">
       <h3>전동기 분기 산출근거</h3>
       <div id="M_basis_inner"></div>
@@ -468,20 +534,56 @@ function onCommonChange(){
   Common.Pt=+$('C_Pt').value; Common.pZ=+$('C_pZ').value; Common.XRt=+$('C_XRt').value;
   Common.Ta=+$('C_Ta').value; Common.cable=$('C_cable').value;
   Common.wiring=$('C_wiring').value; Common.arr=$('C_arr').value; Common.pe=$('C_pe').value;
-  const s = `<b>공통조건:</b> 전원 ${Common.Ps} MVA (X/R ${Common.XRs}) · 변압기 ${Common.Pt} kVA / %Z ${Common.pZ} (X/R ${Common.XRt}) · 기본 ${Common.Ta}°C · ${Common.cable} / ${Common.wiring} ${Common.arr} · PE ${Common.pe==='table'?'표 142.3-1':'지락전류 계산'}`;
+  const _pm=Common.motor; Common.motor=$('C_motor').value; if(_pm!==Common.motor) motorAuto();
+  const s = `<b>공통조건:</b> 전원 ${Common.Ps} MVA (X/R ${Common.XRs}) · 변압기 ${Common.Pt} kVA / %Z ${Common.pZ} (X/R ${Common.XRt}) · 기본 ${Common.Ta}°C · ${Common.cable} / ${Common.wiring} ${Common.arr} · PE ${Common.pe==='table'?'표 142.3-1':'지락전류 계산'} · 전동기 ${Common.motor==='IE4'?'초고효율(IE4)':'고효율(IE3)'}`;
   $('common_summary').innerHTML = s;
   $('common_status_G').innerHTML = s;
   $('common_status_M').innerHTML = s;
   calcG(); calcM();
 }
 
-// 기동방식 변경 시 자동값 채움
+// ---- 전동기 표준 데이터 -------------------------------------------------
+// 효율: IEC 60034-30(-1) 60 Hz 4극 공칭효율 한계(%) — 표의 행 용량 이상 구간은 해당 행 값 적용(행 사이 용량은 아래 행)
+const MOTOR_EFF = {
+  IE3:[[0.75,83.5],[1.1,86.5],[1.5,86.5],[2.2,89.5],[3.7,89.5],[5.5,91.7],[7.5,91.7],[11,92.4],[15,93.0],[18.5,93.6],[22,93.6],[30,94.1],[37,94.5],[45,95.0],[55,95.4],[75,95.4],[90,95.4],[110,95.8],[150,96.2],[185,96.2]],
+  IE4:[[0.75,85.5],[1.1,87.5],[1.5,88.5],[2.2,91.0],[3.7,91.0],[5.5,92.4],[7.5,92.4],[11,93.6],[15,94.1],[18.5,94.5],[22,94.5],[30,95.0],[37,95.4],[45,95.4],[55,95.8],[75,96.2],[90,96.2],[110,96.2],[150,96.5],[185,96.5],[220,96.8],[250,96.8]]
+};
+// 역률: 제조사 카탈로그 전부하 대표값(가정) — 정확한 값은 제조사 데이터로 수정
+const MOTOR_PF = [[0.75,0.80],[2.2,0.82],[5.5,0.84],[11,0.85],[30,0.86],[75,0.87],[160,0.88]];
+// 기동시간 t_m(s): 기동방식별 표준값 + 용량별 구분(가정, 부하 관성에 따라 수정). 규정 없는 방식은 D.STARTING 기본값
+const START_TIME_RULE = {
+  '전전압': [[0,2],[30,3],[90,5]],
+  'Y-Δ':    [[0,5],[30,6],[75,8],[132,10]]
+};
+function tblLook(tbl, kW){ let v=tbl[0][1]; for(const [k,x] of tbl){ if(kW>=k) v=x; } return v; }
+function startTimeFor(mode, kW){
+  const r = START_TIME_RULE[mode];
+  if (r) return tblLook(r, kW);
+  return (D.STARTING[mode]||{}).startTime ?? 10;
+}
+// 표준 용량 선택
+function onPsel(){
+  const v = $('M_Psel').value, manual = (v==='x');
+  $('M_P').style.display = manual ? '' : 'none';
+  if(!manual) $('M_P').value = v;
+  motorAuto(); onStartChange();
+}
+// 효율·역률 자동 입력 (3상만; 단상은 수동)
+function motorAuto(){
+  if (+$('M_phase').value !== 3) return;
+  const kW = +$('M_P').value, cls = ($('C_motor')||{}).value || 'IE3';
+  if(!(kW>0)) return;
+  $('M_eff').value = (tblLook(MOTOR_EFF[cls], kW)/100).toFixed(3);
+  $('M_cos').value = tblLook(MOTOR_PF, kW).toFixed(2);
+}
+
+// 기동방식·용량 변경 시 자동값 채움
 function onStartChange(){
   const mode = $('M_start').value;
   const s = D.STARTING[mode];
   if (s){
     $('M_cosS').value = s.startCosDefault;
-    $('M_tm').value = s.startTime;
+    $('M_tm').value = startTimeFor(mode, +$('M_P').value);
   }
   calcM();
 }
@@ -493,20 +595,40 @@ function showTab(i){
 }
 
 // 보호도체(PE) — 옵션: 'table' 표 142.3-1(선도체 단면적 기준) / 'calc' 142.3.2 계산식(지락전류)
-const PE_CFG = {K:143, tn:0.1, a:1.25, name:'F-GV'};
-function peSize(S, IF2max){
+const PE_CFG = {K:143, tn:0.4, a:1.25, name:'F-GV'};
+// 케이블 단락강도 — 서적판 7장과 동일 절차(D.helpers.shortProt 공용): δ=F2,min/In → tn(MCCB 곡선) → tz=(S·K/F2,min)² → tn<tz
+const SC_CFG = {K:143};
+const _p3 = x => (x==null||!isFinite(x)) ? '-' : Number(x).toPrecision(3).replace(/\.?0+$/,'').replace(/e\+?(-?\d+)/,'×10^$1');
+function scProt(In, S, IF2min){ return D.helpers.shortProt({type:'MCCB', name:'산업용 MCCB', In:In, IF2:IF2min, Seff:S, K:SC_CFG.K}); }
+function scJudge(sp){
+  if(sp.tn==null) return `단락강도 t<sub>z</sub>(${_p3(sp.tz)}s) — <span class="fail">특성곡선 확인 필요</span>`;
+  return `단락강도 t<sub>n</sub>(${_p3(sp.tn)}s)&lt;t<sub>z</sub>(${_p3(sp.tz)}s) — <span class="${sp.ok?'pass':'fail'}">${sp.ok?'적정':'부적정(곡선 확인)'}</span>`;
+}
+function scBasis(S, IF2min, In, sp){
+  const tnTxt = sp.tn==null ? '(곡선 확인 필요)' : `$t_n\\approx ${_p3(sp.tn)}$ s`;
+  return `<br><b>케이블 단락강도 (서적판 7장 절차)</b><br>
+    차단배율 $\\delta=\\dfrac{I_{F2,min}}{I_n}=\\dfrac{${fmt(IF2min,0)}}{${In}}=${fmt(sp.delta,1)}$ → ${sp.region}<br>
+    동작시간 ${tnTxt}<span style="color:#6b7280"> (근거: ${sp.src})</span><br>
+    $$t_z=\\left(\\frac{S\\cdot K}{I_{F2,min}}\\right)^2=\\left(\\frac{${S}\\cdot${SC_CFG.K}}{${fmt(IF2min,0)}}\\right)^2=${_p3(sp.tz)}\\text{ s}$$
+    판정: ${sp.tn==null ? '<b>특성곡선 확인 필요</b>' : `$t_n ${sp.ok?'\\lt':'\\ge'} t_z$ → <b>${sp.ok?'적정':'부적정'}</b>`}
+    <div class="note"><b>주기</b> ① 서적판 7장과 같은 절차(t<sub>n</sub> &lt; t<sub>z</sub>)이며, 판정 전류는 차단기가 가장 늦게 동작하는 분기 끝점 최소 단락전류 I<sub>F2,min</sub>(도체 250℃)이다. ② t<sub>n</sub>은 MCCB 제조사 특성곡선 최대값에서 읽는다(순시 영역은 순시 시간, 반한시 영역은 열동 곡선 판독). 고정 시간(0.2s·0.4s 등)을 쓰면 근거리에서 순시 차단되는 큰 전류에 긴 시간을 곱해 과설계가 되고, 원거리 반한시 영역에서는 실제 동작시간보다 짧게 가정할 수 있어 쓰지 않는다. ③ F1 최대 단락전류는 차단용량(I<sub>cu</sub>)으로 검토한다. ④ K=${SC_CFG.K}(구리 XLPE, 90→250℃, KEC 142.3.2 / IEC 60364-4-43). ⑤ 감전보호 최대 차단시간(KEC 211.2.3 표 6-1: TN, U<sub>o</sub>=220V, 32A 이하 0.4s)은 별도의 지락 보호 확인 항목이며 본 판정의 t<sub>n</sub>이 아니다.</div>`;
+}
+function peSize(S, IF2max, S0){
   const up=(req)=>{ for(const s of SIZES) if(s>=req) return s; return SIZES.at(-1); };
   if (Common.pe==='table'){
-    const req = S<=16 ? S : (S<=35 ? 16 : S/2);
-    return {mode:'table', req, S:Math.max(up(req),2.5)};
+    const B = (S0!=null) ? S0 : S;   // 표 142.3-1: 전압강하로 굵어진 단면적은 반영하지 않고 초기 선정(허용전류·기동온도) 단면적 기준
+    const req = B<=16 ? B : (B<=35 ? 16 : B/2);
+    return {mode:'table', req, base:B, S:Math.max(up(req),2.5)};
   }
   const req = IF2max*Math.sqrt(PE_CFG.tn)/PE_CFG.K*PE_CFG.a;
   return {mode:'calc', req, S:Math.max(up(req),2.5)};
 }
 function peBasis(pe, S, IF2max){
   if (pe.mode==='table'){
-    const rule = S<=16 ? '$S\\le16$ → $S_{PE}=S$' : (S<=35 ? '$16&lt;S\\le35$ → 16㎟' : '$S>35$ → $S/2='+fmt(S/2,1)+'$㎟');
-    return `표 142.3-1 (선도체 ${S}㎟: ${rule}) → <b>${PE_CFG.name} ${pe.S}㎟</b>`;
+    const B = pe.base;
+    const rule = B<=16 ? '$S\\le16$ → $S_{PE}=S$' : (B<=35 ? '$16&lt;S\\le35$ → 16㎟' : '$S>35$ → $S/2='+fmt(B/2,1)+'$㎟');
+    const note = (B!==S) ? `<br><span style="color:#6b7280">※ 기준 선도체 ${B}㎟ = 초기 선정(허용전류·기동온도) 단면적. 전압강하로 ${S}㎟로 증가한 부분은 보호도체 선정에 반영하지 않음.</span>` : '';
+    return `표 142.3-1 (선도체 ${B}㎟: ${rule}) → <b>${PE_CFG.name} ${pe.S}㎟</b>${note}`;
   }
   return `$$S_{PE}=\\frac{I_{F2,max}\\sqrt{t_n}}{K}\\cdot a=\\frac{${fmt(IF2max,0)}\\cdot\\sqrt{${PE_CFG.tn}}}{${PE_CFG.K}}\\cdot${PE_CFG.a}=${fmt(pe.req,2)}\\text{㎟}$$
     ($I_{F2,max}$: 분기 끝점 최대단락전류, $t_n$: 순시차단시간, $K$: 보호도체 상수, $a$: 설계여유) → <b>${PE_CFG.name} ${pe.S}㎟</b>`;
@@ -520,6 +642,48 @@ function izTable(phase, cores, wiring, arr, Ta, Nc){
   const iz={}; for(const s of SIZES) if(base[s]) iz[s]=base[s]*Ka*Kg;
   return iz;
 }
+// 차단용량: LS Metasol MCCB 기종일람표(프레임별 정격차단전류 Icu, kA Sym, KS C 8321/IEC 60947-2)
+// in:[최소,최대 정격전류] / i380: 380V, i220: 220/250V. E-Type(경제형)은 제외.
+const MCCB_FRAMES = [
+  {af:30, type:'S',    in:[3,30],    i380:18, i220:30},
+  {af:50, type:'N',    in:[15,50],   i380:18, i220:30},
+  {af:50, type:'S',    in:[15,50],   i380:22, i220:35},
+  {af:50, type:'H',    in:[15,50],   i380:50, i220:100},
+  {af:60, type:'N',    in:[15,60],   i380:18, i220:30},
+  {af:60, type:'S',    in:[15,60],   i380:22, i220:35},
+  {af:100,type:'N',    in:[15,100],  i380:22, i220:35},
+  {af:100,type:'N(d)', in:[15,100],  i380:30, i220:50},
+  {af:125,type:'S',    in:[15,125],  i380:42, i220:85},
+  {af:125,type:'H',    in:[15,125],  i380:50, i220:100},
+  {af:250,type:'N',    in:[100,250], i380:30, i220:65},
+  {af:250,type:'S',    in:[100,250], i380:42, i220:85},
+  {af:250,type:'H',    in:[100,250], i380:50, i220:100},
+  {af:400,type:'N',    in:[250,400], i380:42, i220:50},
+  {af:400,type:'S',    in:[250,400], i380:65, i220:75},
+  {af:400,type:'H',    in:[250,400], i380:70, i220:85},
+  {af:400,type:'L',    in:[250,400], i380:100,i220:125},
+  {af:630,type:'N',    in:[500,630], i380:45, i220:50},
+  {af:630,type:'S',    in:[500,630], i380:75, i220:85},
+  {af:630,type:'L',    in:[500,630], i380:100,i220:125},
+];
+function selIcu(In, V, req){
+  const col = V<=250 ? 'i220' : 'i380', vTxt = V<=250 ? '220V' : '380V';
+  const cands = MCCB_FRAMES.filter(f=>In>=f.in[0] && In<=f.in[1]).sort((a,b)=>a.af-b.af || a[col]-b[col]);
+  if(!cands.length) return {ok:false, over:true, none:true, icu:0, req, vTxt, text:'Metasol MCCB 표 범위 밖', label:'범위 밖'};
+  const hit = cands.find(f=>f[col]>=req);
+  if(hit) return {ok:true, over:false, af:hit.af, type:hit.type, icu:hit[col], req, vTxt, text:`LS Metasol ${hit.af}AF ${hit.type}-Type (Icu ${hit[col]}kA @${vTxt})`, label:`${hit.af}AF ${hit.type} · ${hit[col]}kA`};
+  const mx = cands.reduce((m,f)=>f[col]>m[col]?f:m, cands[0]);
+  return {ok:false, over:true, af:mx.af, type:mx.type, icu:mx[col], req, vTxt, text:`범위 초과 (요구 ${fmt(req,1)}kA > 최대 ${mx.af}AF ${mx.type}-Type ${mx[col]}kA)`, label:`범위 초과 (최대 ${mx[col]}kA)`};
+}
+function icuWarn(sel){
+  if(!sel.over) return '';
+  return `<div class="warn-box">
+    <div class="head">⚠ 차단용량 범위 초과 — 요구 ${fmt(sel.req,1)}kA (${sel.vTxt})</div>
+    ${sel.none?'정격전류가 Metasol MCCB 표 범위 밖입니다.':`해당 정격전류의 MCCB 최대 차단용량은 ${sel.af}AF ${sel.type}-Type ${sel.icu}kA입니다.`}
+    간선 임피던스 반영(변압기 직결 가정 해제), 한류형 차단기 또는 상위 프레임·ACB 검토가 필요합니다.
+  </div>`;
+}
+
 // 허용전류 보정표 (서적판 3장과 같은 형식): Iz = Iz,30℃ × Ka × Kg
 function izTableHtml(phase,cores,wiring,arr,Ta,Nc,iz,S0,Sfin,In){
   const Ka = D.AMBIENT_TEMP.XLPE[Ta] ?? 1;
@@ -597,8 +761,10 @@ function calcG(){
   const Iz = iz[S] ?? 0;
   // ④ 단락전류·차단용량·보호도체
   const sc = vd.sc;
-  const Icu = D.helpers.nextIcu('MCCB', sc.IF1max*1.25/1000);
-  const pe = peSize(S, sc.IF2max);
+  const icuSel = selIcu(In, V, sc.IF1max*1.25/1000);
+  const Icu = icuSel.icu;
+  const pe = peSize(S, sc.IF2max, S0);
+  const sp = scProt(In, S, sc.IF2min);
   // ⑤ 검증: 전압강하
   const sinT=Math.sqrt(Math.max(0,1-cos*cos));
   const e_run = ((phase===3)?Math.sqrt(3):2)*IB*(L/1000)*(sc.rx[0]*cos+sc.rx[1]*sinT)/V*100;
@@ -609,13 +775,13 @@ function calcG(){
   $('G_R_In').textContent  = In+' A';
   $('G_R_S').textContent   = cable+' '+S+'㎟';
   $('G_R_Iz').textContent  = fmt(Iz,0)+' A';
-  $('G_R_Icu').textContent = Icu+' kA';
+  $('G_R_Icu').textContent = icuSel.label;
   $('G_R_PE').textContent  = PE_CFG.name+' '+pe.S+'㎟';
   $('G_R_judge').innerHTML =
     `보호협조 I<sub>B</sub>(${fmt(IB,1)})≤I<sub>n</sub>(${In})≤I<sub>z</sub>(${fmt(Iz,0)}) — `+
     `<span class="${ok_coord?'pass':'fail'}">${ok_coord?'적정':'부적정'}</span> / `+
-    `운전강하 ${fmt(e_run,2)}% — <span class="${ok_e?'pass':'fail'}">${ok_e?'적정':'부적정'}</span>`;
-  $('G_warn').innerHTML = phaseWarn(phase, false, P) + warnBox(In, false, P) + vdWarn(ok_e, S, L);
+    `운전강하 ${fmt(e_run,2)}% — <span class="${ok_e?'pass':'fail'}">${ok_e?'적정':'부적정'}</span> / `+scJudge(sp);
+  $('G_warn').innerHTML = phaseWarn(phase, false, P) + warnBox(In, false, P) + vdWarn(ok_e, S, L) + icuWarn(icuSel);
 
   $('G_basis_inner').innerHTML = `
     <h3>1. 부하 — 설계전류</h3>
@@ -630,12 +796,13 @@ function calcG(){
     <h3>4. 단락전류·차단용량 (간선 무시·변압기 직결 가정)</h3>
     $K_T=${fmt(sc.KT,5)}$, $R_T=${fmt(sc.RT,4)}$, $X_T=${fmt(sc.XT,4)}$ mΩ<br>
     F1(분기 시작점) 최대단락: <b>${fmt(sc.IF1max,0)}A</b> / F2(분기 끝점) 최대 <b>${fmt(sc.IF2max,0)}A</b>·최소 <b>${fmt(sc.IF2min,0)}A</b><br>
-    차단용량: $I_{cu}\\ge${fmt(sc.IF1max,0)}\\times1.25=${fmt(sc.IF1max*1.25/1000,2)}$kA → <b>${Icu} kA</b>
+    차단용량: $I_{cu}\\ge${fmt(sc.IF1max,0)}\\times1.25=${fmt(sc.IF1max*1.25/1000,2)}$kA → <b>${icuSel.text}</b>${scBasis(S,sc.IF2min,In,sp)}
     <h3>5. 보호도체 (${pe.mode==='table'?'표 142.3-1':'142.3.2 지락전류 계산'})</h3>
     ${peBasis(pe,S,sc.IF2max)}
     <h3>6. 운전 전압강하 검증</h3>
     ${cable} ${S}㎟ R=${sc.rx[0]}, X=${sc.rx[1]} Ω/km
     $$e=\\frac{${phase===3?'\\sqrt3':'2'}\\cdot${fmt(IB,1)}\\cdot${L/1000}\\cdot(${sc.rx[0]}\\cdot${cos}+${sc.rx[1]}\\cdot${fmt(sinT,3)})}{${V}}\\times100=${fmt(e_run,3)}\\%$$`;
+  wrapSecDom($('G_basis_inner'));
   if ($('G_basis').classList.contains('show') && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([$('G_basis')]);
 }
 
@@ -649,7 +816,9 @@ function updateOptUI(){
   $('M_rowYD').style.display = yd ? '' : 'none';
   $('M_rowTc').style.display = (yd && $('M_optYD').value==='1') ? '' : 'none';
 }
+window._cmpBusy=false; window._lastM=null;
 function calcM(){
+  window._lastM=null;
   updateOptUI();
   const phase=+$('M_phase').value, V=+$('M_V').value;
   const P=+$('M_P').value, eff=+$('M_eff').value, cos=+$('M_cos').value;
@@ -708,8 +877,10 @@ function calcM(){
 
   // ④ 단락전류·차단용량·보호도체
   const sc = vd.sc;
-  const Icu = D.helpers.nextIcu('MCCB', sc.IF1max*1.25/1000);
-  const pe = peSize(S, sc.IF2max);
+  const icuSel = selIcu(In, V, sc.IF1max*1.25/1000);
+  const Icu = icuSel.icu;
+  const pe = peSize(S, sc.IF2max, S0);
+  const sp = scProt(In, S, sc.IF2min);
 
   // ⑤ 검증: 전압강하 (운전·기동)
   const sinT=Math.sqrt(Math.max(0,1-cos*cos));
@@ -720,20 +891,22 @@ function calcM(){
   const ok_e = e_run<=emax;
   const ok_eSt = e_st<=emaxSt;
 
+  window._lastM = {mode, mStart, IB, Ims, e_st, e_run, In, S, Iz, icu:icuSel.label, icuOver:!!icuSel.over, pe:pe.S, tm, cosS,
+    scBad: (sp.tn!=null && !sp.ok), scUnk: sp.tn==null, ok: ok_coord&&ok_e&&ok_eSt&&!(sp.tn!=null && !sp.ok)};
   $('M_R_IB').textContent  = fmt(IB,1)+' A';
   $('M_R_Ims').textContent = fmt(Ims,0)+' A';
   $('M_R_In').textContent  = In+' A';
   $('M_R_S').textContent   = cable+' '+S+'㎟';
-  $('M_R_Icu').textContent = Icu+' kA';
+  $('M_R_Icu').textContent = icuSel.label;
   $('M_R_PE').textContent  = PE_CFG.name+' '+pe.S+'㎟';
   $('M_R_judge').innerHTML =
     `보호협조 I<sub>B</sub>(${fmt(IB,1)})≤I<sub>n</sub>(${In})≤I<sub>z</sub>(${fmt(Iz,0)}) — `+
     `<span class="${ok_coord?'pass':'fail'}">${ok_coord?'적정':'부적정'}</span> / `+
     `운전강하 ${fmt(e_run,2)}% — <span class="${ok_e?'pass':'fail'}">${ok_e?'적정':'부적정'}</span> / `+
-    `기동강하 ${fmt(e_st,2)}% — <span class="${ok_eSt?'pass':'fail'}">${ok_eSt?'적정':'부적정'}</span>`;
-  $('M_warn').innerHTML = phaseWarn(phase, true, P) + warnBox(In, true, P) + vdWarn(ok_e&&ok_eSt, S, L);
+    `기동강하 ${fmt(e_st,2)}% — <span class="${ok_eSt?'pass':'fail'}">${ok_eSt?'적정':'부적정'}</span> / `+scJudge(sp);
+  $('M_warn').innerHTML = phaseWarn(phase, true, P) + warnBox(In, true, P) + vdWarn(ok_e&&ok_eSt, S, L) + icuWarn(icuSel);
 
-  const optTxt = `기동방식 계수 ${isLam?'해당 없음(전류제한 λ)':(useC?'적용':'미적용(서적판)')} / Y-Δ 전환 돌입 ${mode==='Y-Δ'?(useYD?'고려':'미고려'):'해당 없음'} / PE ${Common.pe==='table'?'표 142.3-1':'지락전류 계산'}`;
+  const optTxt = `기동방식 계수 ${isLam?'해당 없음(전류제한 λ)':(useC?'적용':'미적용(서적판)')} / Y-Δ 전환 돌입 ${mode==='Y-Δ'?(useYD?'고려':'미고려'):'해당 없음'} / PE ${Common.pe==='table'?'표 142.3-1':'지락전류 계산'} / 전동기 ${Common.motor==='IE4'?'초고효율(IE4)':'고효율(IE3)'} 4극 60Hz (효율·역률·기동시간은 표준 용량 기준 자동값, 입력 수정 가능)`;
   $('M_basis_inner').innerHTML = `
     <div class="note">적용 옵션: ${optTxt}</div>
     <h3>1. 부하 — 설계전류·기동전류</h3>
@@ -755,13 +928,89 @@ function calcM(){
     ${vdTrailHtml(vd.trail)}<br>
     <b>→ 최종 $S=${S}$㎟</b> ($I_z=${fmt(Iz,0)}$A)<br>${izTableHtml(phase,cores,wiring,arr,Ta,Nc,iz,S0,S,In)}
     <h3>4. 단락전류·차단용량 (변압기 직결 가정)</h3>
-    F1 최대 <b>${fmt(sc.IF1max,0)}A</b> / F2 최대 <b>${fmt(sc.IF2max,0)}A</b>·최소 <b>${fmt(sc.IF2min,0)}A</b> / $I_{cu}\\ge${fmt(sc.IF1max*1.25/1000,2)}$kA → <b>${Icu} kA</b>
+    F1 최대 <b>${fmt(sc.IF1max,0)}A</b> / F2 최대 <b>${fmt(sc.IF2max,0)}A</b>·최소 <b>${fmt(sc.IF2min,0)}A</b> / $I_{cu}\\ge${fmt(sc.IF1max*1.25/1000,2)}$kA → <b>${icuSel.text}</b>${scBasis(S,sc.IF2min,In,sp)}
     <h3>5. 보호도체 (${pe.mode==='table'?'표 142.3-1':'142.3.2 지락전류 계산'})</h3>
     ${peBasis(pe,S,sc.IF2max)}
     <h3>6. 전압강하 검증</h3>
     운전: $e=\\frac{${phase===3?'\\sqrt3':'2'}·${fmt(IB,1)}·${L/1000}·(${sc.rx[0]}·${cos}+${sc.rx[1]}·${fmt(sinT,3)})}{${V}}·100=${fmt(e_run,3)}\\%$<br>
     기동: $e_{st}=${fmt(e_st,3)}\\%$ (허용 ${emaxSt}%)`;
+  wrapSecDom($('M_basis_inner'));
+  if (window._cmpBusy) return;
   if ($('M_basis').classList.contains('show') && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([$('M_basis')]);
+  if ($('M_cmp').classList.contains('show')) renderCmp();
+}
+
+
+// ---- 인쇄: 섹션 묶기 · 공통조건 요약 · 비교 모드 -------------------------------
+function wrapSecDom(el){
+  const nodes=[...el.childNodes]; el.innerHTML=''; let cur=null;
+  for(const n of nodes){
+    if(n.nodeType===1 && n.tagName==='H3'){ cur=document.createElement('section'); cur.className='bsec'; el.appendChild(cur); }
+    (cur||el).appendChild(n);
+  }
+}
+function fillPrintHead(){
+  const act=document.querySelector('.tab-panel.active'); const id=act?act.id:'tab0';
+  const C=Common, d=new Date();
+  const it=[
+    ['전원 단락용량 P<sub>s</sub> (MVA)',C.Ps],['전원 X/R',C.XRs],['변압기 용량 (kVA)',C.Pt],['변압기 %Z',C.pZ],
+    ['변압기 X/R',C.XRt],['주위온도 (°C)',C.Ta],['케이블 종류 (XLPE)',C.cable],['공사방법 / 배열',C.wiring+' / '+C.arr],
+    ['보호도체(PE) 기준',C.pe==='table'?'표 142.3-1':'142.3.2 계산'],['단락전류 모델','변압기 직결']
+  ];
+  if(id==='tab2') it.push(['전동기 효율 등급',(C.motor==='IE4'?'초고효율(IE4)':'고효율(IE3)')]);
+  it.push(['출력일',d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')]);
+  $('ph_grid').innerHTML=it.map(r=>`<label>${r[0]}<div class="pv">${r[1]}</div></label>`).join('');
+}
+window.addEventListener('beforeprint', fillPrintHead);
+
+const CMP_GROUPS=[['전전압',/^전전압$/],['Y-Δ',/^Y-Δ$/],['리액터',/^리액터/],['기동보상',/^기동보상/],['Soft Start',/^Soft Start/],['Inverter',/^Inverter/]];
+let cmpSel = new Set(CMP_GROUPS.map(g=>g[0]));
+function toggleCmp(){
+  const b=$('M_cmp'); b.classList.toggle('show');
+  $('M_cmpBtn').textContent = b.classList.contains('show')?'기동방식 비교 닫기 ▲':'기동방식 비교 ▼';
+  if(b.classList.contains('show')) renderCmp();
+}
+function cmpToggleGrp(name,on){ on?cmpSel.add(name):cmpSel.delete(name); renderCmp(); }
+function renderCmp(){
+  $('M_cmpChk').innerHTML = CMP_GROUPS.map(g=>`<label><input type="checkbox" ${cmpSel.has(g[0])?'checked':''} onchange="cmpToggleGrp('${g[0]}',this.checked)"> ${g[0]}</label>`).join('');
+  const sv={start:$('M_start').value, cosS:$('M_cosS').value, tm:$('M_tm').value};
+  const cur=sv.start, P=+$('M_P').value;
+  const modes=Object.keys(D.STARTING).filter(m=>m===cur || CMP_GROUPS.some(g=>cmpSel.has(g[0]) && g[1].test(m)));
+  const rows=[];
+  window._cmpBusy=true;
+  try{
+    for(const m of modes){
+      $('M_start').value=m;
+      if(m!==cur){ $('M_cosS').value=D.STARTING[m].startCosDefault; $('M_tm').value=startTimeFor(m,P); }
+      calcM();
+      rows.push({m, r:window._lastM, cur:m===cur});
+    }
+  } finally {
+    $('M_start').value=sv.start; $('M_cosS').value=sv.cosS; $('M_tm').value=sv.tm;
+    calcM();
+    window._cmpBusy=false;
+  }
+  const curR=(rows.find(x=>x.cur)||{}).r;
+  const okRows=rows.filter(x=>x.r&&x.r.ok&&!x.r.icuOver);
+  const best=okRows.length?okRows.reduce((a,b)=>(b.r.S<a.r.S||(b.r.S===a.r.S&&b.r.In<a.r.In))?b:a):null;
+  const dTxt=(v,c,u)=>{ if(c==null) return '-'; const d=v-c; return d===0?'±0':(d>0?'+':'')+d+u; };
+  const body=rows.map(x=>{
+    const r=x.r;
+    if(!r) return `<tr class="${x.cur?'cur':''}"><td class="l">${x.m}</td><td colspan="10">계산 불가(허용전류표 없음)</td></tr>`;
+    const judge = r.ok ? (r.scUnk?'<span class="pass">적정*</span>':'<span class="pass">적정</span>') : '<span class="fail">부적정</span>';
+    const icu = r.icuOver ? '<span class="fail">'+r.icu+'</span>' : r.icu;
+    return `<tr class="${x.cur?'cur':''}${best&&best===x?' min':''}">
+      <td class="l">${x.m}${x.cur?' (현재)':''}</td>
+      <td>${fmt(r.mStart,2)}</td><td>${fmt(r.Ims,0)}</td><td>${fmt(r.e_st,2)}</td>
+      <td>${r.In}</td><td>${r.S}</td><td>${icu}</td><td>${r.pe}</td><td>${r.tm}</td>
+      <td>${x.cur?'-':dTxt(r.In,curR&&curR.In,'A')+' / '+dTxt(r.S,curR&&curR.S,'㎟')}</td><td>${judge}</td></tr>`;
+  }).join('');
+  $('M_cmp_body').innerHTML = `<table>
+    <thead><tr><th rowspan="2">기동방식</th><th colspan="2">기동전류</th><th rowspan="2">기동강하<br>(%)</th><th colspan="4">선정 결과</th><th rowspan="2">t<sub>m</sub><br>(s)</th><th rowspan="2">현재 대비<br>ΔI<sub>n</sub> / ΔS</th><th rowspan="2">판정</th></tr>
+    <tr><th>I<sub>ms</sub>/I<sub>B</sub></th><th>I<sub>ms</sub> (A)</th><th>MCCB I<sub>n</sub> (A)</th><th>케이블 ㎟</th><th>I<sub>cu</sub></th><th>PE ㎟</th></tr></thead>
+    <tbody>${body}</tbody></table>
+    <div class="note" style="margin-top:6px">★ = 판정이 적정인 방식 중 케이블 굵기·MCCB 정격이 가장 작은 방식(동률이면 먼저 나온 방식). 판정은 보호협조·운전강하·기동강하·케이블 단락강도·Icu(범위 초과 제외)를 모두 만족할 때 ‘적정’. 적정* = 단락강도 특성곡선 확인 필요.<br>
+    비교 조건: 효율·역률·β·k<sub>rush</sub>·γ·δ·옵션(C, Y-Δ 전환 돌입)은 현재 입력값으로 고정. 기동시 역률 cosθ<sub>s</sub>와 기동시간 t<sub>m</sub>은 방식별 표준값(현재 방식은 입력값). 기동시간·역률 표준값은 가정값이므로 실제 기동 조건에 맞게 확인하십시오.</div>`;
 }
 
 function toggleBasisG(){
@@ -774,13 +1023,18 @@ function toggleBasisM(){
   $('M_basisBtn').textContent = b.classList.contains('show')?'산출근거 숨기기 ▲':'산출근거 확인 ▼';
   if (b.classList.contains('show') && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([b]);
 }
+function _printAfterMath(el){
+  fillPrintHead();
+  const go=()=>setTimeout(()=>window.print(),150);
+  if(window.MathJax && MathJax.typesetPromise){ MathJax.typesetPromise([el]).then(go,go); } else go();
+}
 function printG(){
   if(!$('G_basis').classList.contains('show')) toggleBasisG();
-  window.print();
+  _printAfterMath($('G_basis'));
 }
 function printM(){
   if(!$('M_basis').classList.contains('show')) toggleBasisM();
-  window.print();
+  _printAfterMath($('M_basis'));
 }
 
 // MathJax 로드
