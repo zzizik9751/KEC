@@ -106,6 +106,9 @@ table{max-width:100%}
   th,td{min-width:0!important;white-space:normal!important}
   .tw,.fx,pre{overflow:visible;white-space:pre-wrap}
 }
+.sel td{background:#fff6d6!important;font-weight:700}
+.sel0 td{background:#e8f1ff!important}
+.izn{font-size:.85em;color:#6b7280;margin:2px 0 8px}
 </style>
 </head>
 <body>
@@ -502,7 +505,7 @@ function peSize(S, IF2max){
 }
 function peBasis(pe, S, IF2max){
   if (pe.mode==='table'){
-    const rule = S<=16 ? '$S\\le16$ → $S_{PE}=S$' : (S<=35 ? '$16<S\\le35$ → 16㎟' : '$S>35$ → $S/2='+fmt(S/2,1)+'$㎟');
+    const rule = S<=16 ? '$S\\le16$ → $S_{PE}=S$' : (S<=35 ? '$16&lt;S\\le35$ → 16㎟' : '$S>35$ → $S/2='+fmt(S/2,1)+'$㎟');
     return `표 142.3-1 (선도체 ${S}㎟: ${rule}) → <b>${PE_CFG.name} ${pe.S}㎟</b>`;
   }
   return `$$S_{PE}=\\frac{I_{F2,max}\\sqrt{t_n}}{K}\\cdot a=\\frac{${fmt(IF2max,0)}\\cdot\\sqrt{${PE_CFG.tn}}}{${PE_CFG.K}}\\cdot${PE_CFG.a}=${fmt(pe.req,2)}\\text{㎟}$$
@@ -517,19 +520,45 @@ function izTable(phase, cores, wiring, arr, Ta, Nc){
   const iz={}; for(const s of SIZES) if(base[s]) iz[s]=base[s]*Ka*Kg;
   return iz;
 }
+// 허용전류 보정표 (서적판 3장과 같은 형식): Iz = Iz,30℃ × Ka × Kg
+function izTableHtml(phase,cores,wiring,arr,Ta,Nc,iz,S0,Sfin,In){
+  const Ka = D.AMBIENT_TEMP.XLPE[Ta] ?? 1;
+  const Kg = (D.GROUP_REDUCTION[LG[wiring]] || [])[Nc-1] ?? 1;
+  const Kt = Ka*Kg;
+  const list = SIZES.filter(s=>iz[s]);
+  const win=(sel)=>{ const i=list.indexOf(sel); return i<0?list:list.slice(Math.max(0,i-3), i+3); };
+  const show = new Set([...win(S0), ...win(Sfin)]);
+  let rows='';
+  list.filter(s=>show.has(s)).forEach(s=>{
+    const cmp = iz[s]>=In ? '≥' : '&lt;';
+    rows+=`<tr${s===Sfin?' class="sel"':(s===S0?' class="sel0"':'')}><td>${s}</td><td>${fmt(iz[s]/Kt,0)}</td><td>×${fmt(Kt,3)}</td><td><b>${fmt(iz[s],1)}</b></td><td>${cmp} ${In}</td></tr>`;
+  });
+  return `$$K_{total}=K_{ta}\\cdot K_{group}=${fmt(Ka,2)}\\times${fmt(Kg,2)}=${fmt(Kt,3)}\\quad(\\text{주위 }${Ta}^\\circ C,\\ \\text{회선수 }${Nc}),\\qquad I_z=I_{z,30^\\circ C}\\times K_{total}$$
+    <table><thead><tr><th>S(㎟)</th><th>I<sub>z,30°C</sub>(A)</th><th>보정</th><th>보정 I<sub>z</sub>(A)</th><th>I<sub>z</sub> vs I<sub>n</sub></th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="izn">※ ${Sfin===S0?`선정 단면적(${Sfin}㎟, 노란색)`:`최초 선정(${S0}㎟, 연한 파랑)·최종 선정(${Sfin}㎟, 노란색)`} 기준 위 3개·아래 2개 단면적만 표시. 차단기 I<sub>n</sub>=${In}A 이상의 I<sub>z</sub>가 보호협조 조건입니다.</div>`;
+}
 const selSizeBy=(iz,req)=>{ for(const s of SIZES) if(iz[s]&&iz[s]>=req) return s; return SIZES.at(-1); };
 const calcSizeUp=(req)=>{ for(const s of SIZES) if(s>=req) return s; return SIZES.at(-1); };
 
+// 허용전류 표가 없는 입력 조합(예: 단상 F2 1심) → 값 대신 안내
+function noIzStop(pre, phase, wiring, cores){
+  const ids=pre==='G'?['IB','In','S','Icu','PE']:['IB','Ims','In','S','Icu','PE'];
+  ids.forEach(k=>{ const e=$(pre+'_R_'+k); if(e) e.textContent='-'; });
+  $(pre+'_R_judge').innerHTML=`<span class="fail">선택한 조건(${phase===1?'단상':'3상'} · 공사방법 ${wiring} · ${cores}심)에는 허용전류 표 데이터가 없어 선정할 수 없습니다. 공사방법 또는 심선수를 바꿔 주십시오.</span>`;
+  $(pre+'_warn').innerHTML='';
+}
+
 // 전압강하 정식 계산으로 굵기 결정 — 시작 굵기부터 한 단계씩 올려 e_run(, e_st) 만족 시 확정
 function pickSizeVD(S0, iz, phase,V,cable,cores,arr,L,k,IB,cos,emax,Ims,cosS,emaxSt){
+  const kv = (phase===3) ? Math.sqrt(3) : 2;   // 전압강하 계수: 3상 √3, 단상 2(왕복)
   const sinT=Math.sqrt(Math.max(0,1-cos*cos));
   const sinS=cosS!=null?Math.sqrt(Math.max(0,1-cosS*cosS)):0;
   const trail=[]; let S=S0, sc=null;
   for(const s of SIZES){
     if(s<S0 || !iz[s]) continue;   // 허용전류 데이터가 없는 굵기는 제외
     const c=shortCircuit(phase,V,s,cable,cores,arr,L);
-    const er=k*IB*(L/1000)*(c.rx[0]*cos+c.rx[1]*sinT)/V*100;
-    const es=(Ims!=null)? k*Ims*(L/1000)*(c.rx[0]*cosS+c.rx[1]*sinS)/V*100 : null;
+    const er=kv*IB*(L/1000)*(c.rx[0]*cos+c.rx[1]*sinT)/V*100;
+    const es=(Ims!=null)? kv*Ims*(L/1000)*(c.rx[0]*cosS+c.rx[1]*sinS)/V*100 : null;
     const ok = er<=emax && (es==null || es<=emaxSt);
     trail.push({s,er,es,ok}); S=s; sc=c;
     if(ok) break;
@@ -559,6 +588,7 @@ function calcG(){
   const In = D.helpers.nextIn('MCCB', IB);
   // ③ 케이블: Iz≥In, 전압강하
   const iz = izTable(phase,cores,wiring,arr,Ta,Nc);
+  if(!Object.keys(iz).length){ noIzStop('G',phase,wiring,cores); return; }
   const S_iz = selSizeBy(iz,In);
   const Kw = (phase===1) ? 35.6 : 30.8;
   const S0 = Math.max(S_iz, 2.5);
@@ -571,7 +601,7 @@ function calcG(){
   const pe = peSize(S, sc.IF2max);
   // ⑤ 검증: 전압강하
   const sinT=Math.sqrt(Math.max(0,1-cos*cos));
-  const e_run = k*IB*(L/1000)*(sc.rx[0]*cos+sc.rx[1]*sinT)/V*100;
+  const e_run = ((phase===3)?Math.sqrt(3):2)*IB*(L/1000)*(sc.rx[0]*cos+sc.rx[1]*sinT)/V*100;
   const ok_coord = IB<=In && In<=Iz;
   const ok_e = e_run<=emax;
 
@@ -596,7 +626,7 @@ function calcG(){
     (a) 보호협조 $I_z\\ge I_n$: $S=${S_iz}$㎟ ($I_z=${fmt(iz[S_iz],0)}$A)<br>
     (b) 전압강하 (케이블 R·X 적용 정식, 허용 ${emax}%) — ${S_iz}㎟부터 확인<br>
     ${vdTrailHtml(vd.trail)}<br>
-    <b>→ 최종 $S=${S}$㎟</b> ($I_z=${fmt(Iz,0)}$A)
+    <b>→ 최종 $S=${S}$㎟</b> ($I_z=${fmt(Iz,0)}$A)<br>${izTableHtml(phase,cores,wiring,arr,Ta,Nc,iz,S0,S,In)}
     <h3>4. 단락전류·차단용량 (간선 무시·변압기 직결 가정)</h3>
     $K_T=${fmt(sc.KT,5)}$, $R_T=${fmt(sc.RT,4)}$, $X_T=${fmt(sc.XT,4)}$ mΩ<br>
     F1(분기 시작점) 최대단락: <b>${fmt(sc.IF1max,0)}A</b> / F2(분기 끝점) 최대 <b>${fmt(sc.IF2max,0)}A</b>·최소 <b>${fmt(sc.IF2min,0)}A</b><br>
@@ -666,6 +696,7 @@ function calcM(){
 
   // ③ 케이블: Iz≥In, 전압강하, 기동온도
   const iz = izTable(phase,cores,wiring,arr,Ta,Nc);
+  if(!Object.keys(iz).length){ noIzStop('M',phase,wiring,cores); return; }
   const S_iz = selSizeBy(iz,In);
   const Kw = (phase===1) ? 35.6 : 30.8;
   const Sst = IB*mOv*Math.sqrt(tm)/Ks*aM;
@@ -683,8 +714,8 @@ function calcM(){
   // ⑤ 검증: 전압강하 (운전·기동)
   const sinT=Math.sqrt(Math.max(0,1-cos*cos));
   const sinS=Math.sqrt(Math.max(0,1-cosS*cosS));
-  const e_run = k*IB*(L/1000)*(sc.rx[0]*cos+sc.rx[1]*sinT)/V*100;
-  const e_st  = k*Ims*(L/1000)*(sc.rx[0]*cosS+sc.rx[1]*sinS)/V*100;
+  const e_run = ((phase===3)?Math.sqrt(3):2)*IB*(L/1000)*(sc.rx[0]*cos+sc.rx[1]*sinT)/V*100;
+  const e_st  = ((phase===3)?Math.sqrt(3):2)*Ims*(L/1000)*(sc.rx[0]*cosS+sc.rx[1]*sinS)/V*100;
   const ok_coord = IB<=In && In<=Iz;
   const ok_e = e_run<=emax;
   const ok_eSt = e_st<=emaxSt;
@@ -722,7 +753,7 @@ function calcM(){
     (b) 기동온도 $S_{st}=I_B\\cdot ${mOvTxt}\\cdot\\sqrt{t_m}/K\\cdot a=${fmt(Sst,2)}$㎟ → ${S_temp}㎟<br>
     (c) 전압강하 (케이블 R·X 적용 정식, 운전 ${emax}% · 기동 ${emaxSt}%) — ${S0}㎟부터 확인<br>
     ${vdTrailHtml(vd.trail)}<br>
-    <b>→ 최종 $S=${S}$㎟</b> ($I_z=${fmt(Iz,0)}$A)
+    <b>→ 최종 $S=${S}$㎟</b> ($I_z=${fmt(Iz,0)}$A)<br>${izTableHtml(phase,cores,wiring,arr,Ta,Nc,iz,S0,S,In)}
     <h3>4. 단락전류·차단용량 (변압기 직결 가정)</h3>
     F1 최대 <b>${fmt(sc.IF1max,0)}A</b> / F2 최대 <b>${fmt(sc.IF2max,0)}A</b>·최소 <b>${fmt(sc.IF2min,0)}A</b> / $I_{cu}\\ge${fmt(sc.IF1max*1.25/1000,2)}$kA → <b>${Icu} kA</b>
     <h3>5. 보호도체 (${pe.mode==='table'?'표 142.3-1':'142.3.2 지락전류 계산'})</h3>
