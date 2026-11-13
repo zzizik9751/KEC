@@ -440,6 +440,15 @@ function warnBox(In, isMotor, P){
   </div>`;
 }
 
+// 전압강하: 단일 케이블 최대 굵기에서도 불만족 시 경고
+function vdWarn(ok, S, L){
+  if (ok) return '';
+  return `<div class="warn-box">
+    <div class="head">⚠ 단일 케이블 최대 굵기(${S}㎟)에서도 전압강하 허용치를 만족하지 못합니다</div>
+    분기 길이(${L}m) 단축, 부하 분할, 병렬 도체(서적판 M6·M7 참고) 또는 허용강하 조정을 검토하십시오.
+  </div>`;
+}
+
 // 단상 3.7kW 지원 한도 경고
 function phaseWarn(phase, isMotor, P){
   if (phase!==1 || P<=3.7) return '';
@@ -511,6 +520,27 @@ function izTable(phase, cores, wiring, arr, Ta, Nc){
 const selSizeBy=(iz,req)=>{ for(const s of SIZES) if(iz[s]&&iz[s]>=req) return s; return SIZES.at(-1); };
 const calcSizeUp=(req)=>{ for(const s of SIZES) if(s>=req) return s; return SIZES.at(-1); };
 
+// 전압강하 정식 계산으로 굵기 결정 — 시작 굵기부터 한 단계씩 올려 e_run(, e_st) 만족 시 확정
+function pickSizeVD(S0, iz, phase,V,cable,cores,arr,L,k,IB,cos,emax,Ims,cosS,emaxSt){
+  const sinT=Math.sqrt(Math.max(0,1-cos*cos));
+  const sinS=cosS!=null?Math.sqrt(Math.max(0,1-cosS*cosS)):0;
+  const trail=[]; let S=S0, sc=null;
+  for(const s of SIZES){
+    if(s<S0 || !iz[s]) continue;   // 허용전류 데이터가 없는 굵기는 제외
+    const c=shortCircuit(phase,V,s,cable,cores,arr,L);
+    const er=k*IB*(L/1000)*(c.rx[0]*cos+c.rx[1]*sinT)/V*100;
+    const es=(Ims!=null)? k*Ims*(L/1000)*(c.rx[0]*cosS+c.rx[1]*sinS)/V*100 : null;
+    const ok = er<=emax && (es==null || es<=emaxSt);
+    trail.push({s,er,es,ok}); S=s; sc=c;
+    if(ok) break;
+  }
+  if(!sc) sc=shortCircuit(phase,V,S0,cable,cores,arr,L);
+  return {S,sc,trail};
+}
+function vdTrailHtml(trail,emax,emaxSt){
+  return trail.map(t=>`&nbsp;&nbsp;&nbsp;${t.s}㎟ : e=${fmt(t.er,2)}%`+(t.es!=null?`, e<sub>st</sub>=${fmt(t.es,2)}%`:'')+` → ${t.ok?'<b>적정</b>':'부적정, 한 단계 상향'}`).join('<br>');
+}
+
 // =================================================================
 // 비전동기 분기 계산 (G) — ① 부하 → ② 차단기 → ③ 케이블 → ④ 단락·PE → ⑤ 검증
 // =================================================================
@@ -531,12 +561,12 @@ function calcG(){
   const iz = izTable(phase,cores,wiring,arr,Ta,Nc);
   const S_iz = selSizeBy(iz,In);
   const Kw = (phase===1) ? 35.6 : 30.8;
-  const Sv = Kw*IB*L/(1000*V*emax/100);
-  const S_drop = calcSizeUp(Sv);
-  const S = Math.max(S_iz, S_drop, 2.5);
+  const S0 = Math.max(S_iz, 2.5);
+  const vd = pickSizeVD(S0, iz, phase,V,cable,cores,arr,L,k,IB,cos,emax,null,null,null);
+  const S = vd.S;
   const Iz = iz[S] ?? 0;
   // ④ 단락전류·차단용량·보호도체
-  const sc = shortCircuit(phase, V, S, cable, cores, arr, L);
+  const sc = vd.sc;
   const Icu = D.helpers.nextIcu('MCCB', sc.IF1max*1.25/1000);
   const pe = peSize(S, sc.IF2max);
   // ⑤ 검증: 전압강하
@@ -555,17 +585,18 @@ function calcG(){
     `보호협조 I<sub>B</sub>(${fmt(IB,1)})≤I<sub>n</sub>(${In})≤I<sub>z</sub>(${fmt(Iz,0)}) — `+
     `<span class="${ok_coord?'pass':'fail'}">${ok_coord?'적정':'부적정'}</span> / `+
     `운전강하 ${fmt(e_run,2)}% — <span class="${ok_e?'pass':'fail'}">${ok_e?'적정':'부적정'}</span>`;
-  $('G_warn').innerHTML = phaseWarn(phase, false, P) + warnBox(In, false, P);
+  $('G_warn').innerHTML = phaseWarn(phase, false, P) + warnBox(In, false, P) + vdWarn(ok_e, S, L);
 
   $('G_basis_inner').innerHTML = `
     <h3>1. 부하 — 설계전류</h3>
     $$ I_B=\\frac{P\\times1000}{${phase===3?'\\sqrt3\\cdot V':'V'}}=\\frac{${P}\\times1000}{${phase===3?'\\sqrt3\\times'+V:V}}=${fmt(IB,2)}\\text{ A} $$
     <h3>2. 차단기 선정</h3>
     설계전류 기준: $I_n=\\text{nextIn}_\\text{MCCB}(${fmt(IB,1)})=${In}$ A
-    <h3>3. 케이블 선정 (2기준 최댓값)</h3>
+    <h3>3. 케이블 선정 (허용전류 → 전압강하 정식 검증)</h3>
     (a) 보호협조 $I_z\\ge I_n$: $S=${S_iz}$㎟ ($I_z=${fmt(iz[S_iz],0)}$A)<br>
-    (b) 전압강하 $S_v=\\dfrac{${Kw}\\cdot${fmt(IB,1)}\\cdot${L}}{1000\\cdot${V}\\cdot${emax/100}}=${fmt(Sv,2)}$㎟ → ${S_drop}㎟<br>
-    <b>→ 최종 $S=\\max(${S_iz},${S_drop})=${S}$㎟</b> ($I_z=${fmt(Iz,0)}$A)
+    (b) 전압강하 (케이블 R·X 적용 정식, 허용 ${emax}%) — ${S_iz}㎟부터 확인<br>
+    ${vdTrailHtml(vd.trail)}<br>
+    <b>→ 최종 $S=${S}$㎟</b> ($I_z=${fmt(Iz,0)}$A)
     <h3>4. 단락전류·차단용량 (간선 무시·변압기 직결 가정)</h3>
     $K_T=${fmt(sc.KT,5)}$, $R_T=${fmt(sc.RT,4)}$, $X_T=${fmt(sc.XT,4)}$ mΩ<br>
     F1(분기 시작점) 최대단락: <b>${fmt(sc.IF1max,0)}A</b> / F2(분기 끝점) 최대 <b>${fmt(sc.IF2max,0)}A</b>·최소 <b>${fmt(sc.IF2min,0)}A</b><br>
@@ -637,15 +668,15 @@ function calcM(){
   const iz = izTable(phase,cores,wiring,arr,Ta,Nc);
   const S_iz = selSizeBy(iz,In);
   const Kw = (phase===1) ? 35.6 : 30.8;
-  const Sv = Kw*IB*L/(1000*V*emax/100);
-  const S_drop = calcSizeUp(Sv);
   const Sst = IB*mOv*Math.sqrt(tm)/Ks*aM;
   const S_temp = calcSizeUp(Sst);
-  const S = Math.max(S_iz, S_drop, S_temp, 2.5);
+  const S0 = Math.max(S_iz, S_temp, 2.5);
+  const vd = pickSizeVD(S0, iz, phase,V,cable,cores,arr,L,k,IB,cos,emax,Ims,cosS,emaxSt);
+  const S = vd.S;
   const Iz = iz[S] ?? 0;
 
   // ④ 단락전류·차단용량·보호도체
-  const sc = shortCircuit(phase, V, S, cable, cores, arr, L);
+  const sc = vd.sc;
   const Icu = D.helpers.nextIcu('MCCB', sc.IF1max*1.25/1000);
   const pe = peSize(S, sc.IF2max);
 
@@ -669,7 +700,7 @@ function calcM(){
     `<span class="${ok_coord?'pass':'fail'}">${ok_coord?'적정':'부적정'}</span> / `+
     `운전강하 ${fmt(e_run,2)}% — <span class="${ok_e?'pass':'fail'}">${ok_e?'적정':'부적정'}</span> / `+
     `기동강하 ${fmt(e_st,2)}% — <span class="${ok_eSt?'pass':'fail'}">${ok_eSt?'적정':'부적정'}</span>`;
-  $('M_warn').innerHTML = phaseWarn(phase, true, P) + warnBox(In, true, P);
+  $('M_warn').innerHTML = phaseWarn(phase, true, P) + warnBox(In, true, P) + vdWarn(ok_e&&ok_eSt, S, L);
 
   const optTxt = `기동방식 계수 ${isLam?'해당 없음(전류제한 λ)':(useC?'적용':'미적용(서적판)')} / Y-Δ 전환 돌입 ${mode==='Y-Δ'?(useYD?'고려':'미고려'):'해당 없음'} / PE ${Common.pe==='table'?'표 142.3-1':'지락전류 계산'}`;
   $('M_basis_inner').innerHTML = `
@@ -686,11 +717,12 @@ function calcM(){
     &nbsp;&nbsp;&nbsp;Y-Δ 전환 돌입: $\\kappa=${fmt(kappa,4)}$, $K=1.02+0.98e^{-3\\times${fmt(RXt,4)}}=${fmt(Ktrans,4)}$, $I_{YD}=I_B\\cdot\\beta\\cdot\\kappa\\cdot K=${fmt(IB,2)}\\times${beta}\\times${fmt(kappa,3)}\\times${fmt(Ktrans,3)}=${fmt(Iyd,0)}$A`:''}<br>
     &nbsp;&nbsp;&nbsp;$I_n\\ge\\dfrac{${fmt(Iinrush,0)}\\times${aM}}{${delta}}=${fmt(Iinrush*aM/delta,1)}$A → ${In_inrush}A<br>
     <b>→ $I_n=\\max=${In}$ A</b>
-    <h3>3. 케이블 선정 (3기준 최댓값)</h3>
+    <h3>3. 케이블 선정 (허용전류·기동온도 → 전압강하 정식 검증)</h3>
     (a) 보호협조 $I_z\\ge I_n$ → ${S_iz}㎟<br>
-    (b) 전압강하 $S_v=${fmt(Sv,2)}$㎟ → ${S_drop}㎟<br>
-    (c) 기동온도 $S_{st}=I_B\\cdot ${mOvTxt}\\cdot\\sqrt{t_m}/K\\cdot a=${fmt(Sst,2)}$㎟ → ${S_temp}㎟<br>
-    <b>→ $S=\\max=${S}$㎟</b> ($I_z=${fmt(Iz,0)}$A)
+    (b) 기동온도 $S_{st}=I_B\\cdot ${mOvTxt}\\cdot\\sqrt{t_m}/K\\cdot a=${fmt(Sst,2)}$㎟ → ${S_temp}㎟<br>
+    (c) 전압강하 (케이블 R·X 적용 정식, 운전 ${emax}% · 기동 ${emaxSt}%) — ${S0}㎟부터 확인<br>
+    ${vdTrailHtml(vd.trail)}<br>
+    <b>→ 최종 $S=${S}$㎟</b> ($I_z=${fmt(Iz,0)}$A)
     <h3>4. 단락전류·차단용량 (변압기 직결 가정)</h3>
     F1 최대 <b>${fmt(sc.IF1max,0)}A</b> / F2 최대 <b>${fmt(sc.IF2max,0)}A</b>·최소 <b>${fmt(sc.IF2min,0)}A</b> / $I_{cu}\\ge${fmt(sc.IF1max*1.25/1000,2)}$kA → <b>${Icu} kA</b>
     <h3>5. 보호도체 (${pe.mode==='table'?'표 142.3-1':'142.3.2 지락전류 계산'})</h3>
