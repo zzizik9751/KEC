@@ -148,6 +148,8 @@ table{max-width:100%}
   .input-grid label{font-size:9.5px !important}
   .input-grid input,.input-grid select{padding:1px 5px !important;font-size:10.5px !important;margin-top:1px !important;height:20px}
   #print_head .input-grid{grid-template-columns:repeat(6,1fr) !important}
+  .print-only .pv{min-height:17px}
+  #ph_proj .pv{font-weight:700;font-size:11px !important}
   .print-only .pv{padding:1px 5px !important;font-size:10px !important;margin-top:1px !important}
   #print_head{margin-bottom:2px}
   .summary{grid-template-columns:repeat(6,1fr) !important;gap:5px !important}
@@ -167,6 +169,7 @@ table{max-width:100%}
 </div>
 
 <div id="print_head" class="print-only">
+  <div class="input-grid" id="ph_proj"></div>
   <h2>계산 조건 (공통)</h2>
   <div class="input-grid" id="ph_grid"></div>
 </div>
@@ -181,6 +184,11 @@ table{max-width:100%}
   <!-- ============ 탭 0: 공통 조건 ============ -->
   <div class="tab-panel active" id="tab0">
     <h2>공통 조건 — 전원·변압기·기본값</h2>
+    <h3>프로젝트 정보 <span class="ref">인쇄물 상단에 표시</span></h3>
+    <div class="input-grid">
+      <label style="grid-column:span 3">프로젝트명<input id="C_proj" type="text" placeholder="예: ○○선 ○○역 전기설비 실시설계" oninput="onProjChange()"></label>
+      <label>작성자<input id="C_author" type="text" placeholder="성명" oninput="onProjChange()"></label>
+    </div>
     <div class="sub" style="margin-bottom:8px">한 번 설정하면 비전동기·전동기 탭에서 자동 사용됩니다. 단락전류 산출의 기준값.</div>
     <h3>전원 / 변압기</h3>
     <div class="input-grid">
@@ -239,6 +247,7 @@ table{max-width:100%}
     <h2>비전동기 분기회로</h2>
     <h3>부하 조건</h3>
     <div class="input-grid">
+      <label class="no-print" style="grid-column:span 4">회로명 / 부하명 <span style="font-size:11px;color:#6b7280">(인쇄물에 표시)</span><input id="G_name" type="text" placeholder="예: LP-3 분기 / 급기팬 제어반"></label>
       <label>전기방식 <span style="font-size:11px;color:#b54708">(단상은 3.7kVA까지만 지원)</span>
         <select id="G_phase" onchange="calcG()">
           <option value="1">단상</option>
@@ -311,6 +320,7 @@ table{max-width:100%}
     <h2>전동기 분기회로</h2>
     <h3>부하 / 기동 조건</h3>
     <div class="input-grid">
+      <label class="no-print" style="grid-column:span 4">회로명 / 부하명 <span style="font-size:11px;color:#6b7280">(인쇄물에 표시)</span><input id="M_name" type="text" placeholder="예: MCC-1 냉각수펌프 P-101"></label>
       <label>전기방식 <span style="font-size:11px;color:#b54708">(단상은 3.7kW까지만 지원)</span>
         <select id="M_phase" onchange="motorAuto();calcM()">
           <option value="1">단상</option>
@@ -949,8 +959,17 @@ function wrapSecDom(el){
     (cur||el).appendChild(n);
   }
 }
+function onProjChange(){
+  try{ localStorage.setItem('kec_proj', JSON.stringify({p:$('C_proj').value, a:$('C_author').value})); }catch(e){}
+}
+(function(){ try{ const o=JSON.parse(localStorage.getItem('kec_proj')||'null'); if(o){ $('C_proj').value=o.p||''; $('C_author').value=o.a||''; } }catch(e){} })();
+const _esc=t=>String(t||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 function fillPrintHead(){
   const act=document.querySelector('.tab-panel.active'); const id=act?act.id:'tab0';
+  const nm = id==='tab2'?$('M_name').value : id==='tab1'?$('G_name').value : '';
+  $('ph_proj').innerHTML = `<label style="grid-column:span 3">프로젝트명<div class="pv">${_esc($('C_proj').value)}</div></label>
+    <label style="grid-column:span 2">회로명 / 부하명<div class="pv">${_esc(nm)}</div></label>
+    <label>작성자<div class="pv">${_esc($('C_author').value)}</div></label>`;
   const C=Common, d=new Date();
   const it=[
     ['전원 단락용량 P<sub>s</sub> (MVA)',C.Ps],['전원 X/R',C.XRs],['변압기 용량 (kVA)',C.Pt],['변압기 %Z',C.pZ],
