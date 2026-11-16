@@ -121,6 +121,7 @@ table{max-width:100%}
 #zbar button.on{background:rgba(255,255,255,.3)}
 @media print{#zbar{display:none!important} html body{zoom:1!important}}
 </style>
+<style>mjx-container[display="true"]{max-width:100%;overflow-x:auto;overflow-y:hidden}</style>
 </head>
 <body>
 <div id="zbar" aria-label="화면 확대"><button type="button" id="z100" title="100% (출력 기준 크기)">100%</button><button type="button" id="z150" title="150% 확대">150%</button></div>
@@ -407,7 +408,8 @@ function buildBasis(p,r){
   ${sh('2.2 계산')}
   $$ S_a=${p.Stot}\\times${p.dem/100}=${f(r.Sa,1)}\\text{ kVA},\\quad S_m=\\frac{${p.P}}{${p.eff}\\times${p.cos}}=${f(r.Sm,1)}\\text{ kVA}$$
   ${withSum([{n:'선행운전부하',S:r.Sa,c:p.cosA,P:r.la.P,s:r.sinA,Q:r.la.Q},{n:'전동기부하',S:r.Sm,c:p.cos,P:r.lm.P,s:r.sinM,Q:r.lm.Q}],r.run)}
-  $$ S=\\sqrt{${f(r.run.P,1)}^2+${f(r.run.Q,1)}^2}=${f(r.run.S,1)}\\text{ kVA},\\quad I_B=\\frac{${f(r.run.S,1)}}{\\sqrt3\\times${p.V/1000}}=${f(r.IB,1)}\\text{ A},\\quad \\cos\\theta=\\frac{P}{S}=${f(r.cosT,3)}$$
+  $$ S=\\sqrt{${f(r.run.P,1)}^2+${f(r.run.Q,1)}^2}=${f(r.run.S,1)}\\text{ kVA},\\quad I_B=\\frac{${f(r.run.S,1)}}{\\sqrt3\\times${p.V/1000}}=${f(r.IB,1)}\\text{ A}$$
+  $$\\cos\\theta=\\frac{P}{S}=${f(r.cosT,3)}$$
   ${sh2('기동시 간선전류 I<sub>FS</sub> (전전압 기동 β=' + p.beta + ')')}
   $S_{ms}=S_m\\cdot\\beta=${f(r.Sm,1)}\\times${p.beta}=${f(r.Sm*p.beta,1)}$kVA
   ${withSum([{n:'선행운전부하',S:r.Sa,c:p.cosA,P:r.la.P,s:r.sinA,Q:r.la.Q},{n:'전동기 전전압 기동',S:r.Sm*p.beta,c:p.cosS,P:r.Sm*p.beta*p.cosS,s:r.sinS,Q:r.Sm*p.beta*r.sinS}],r.stf)}
@@ -445,7 +447,8 @@ function buildBasis(p,r){
   ${j}<b>(4) 보호장치 정격 $I_n=\\max(${r.In_B},${r.In_s},${r.In_i})=${r.In}$A</b> — $I_2=k_2\\cdot I_n=${r.k2}\\times${r.In}=${f(r.I2,1)}$A</div>
   ${sh2('(5) 차단전류 — T2점(변압기 2차 모선) 단락전류')}
   $$Z_s=${f(r.Zs,4)}\\text{ mΩ},\\ R_s=${f(r.Rs,4)},\\ X_s=${f(r.Xs,4)}$$
-  $$Z_t=${f(r.Zt,4)},\\ X_t=${f(r.Xt,4)},\\ x_{T,pu}=${f(r.xt_pu,5)},\\ K_T=${f(r.KT,5)},\\ Z_T=${f(r.ZT,4)},\\ R_T=${f(r.RT,4)},\\ X_T=${f(r.XT,4)}\\text{ mΩ}$$
+  $$Z_t=${f(r.Zt,4)},\\ X_t=${f(r.Xt,4)},\\ x_{T,pu}=${f(r.xt_pu,5)},\\ K_T=${f(r.KT,5)}\\text{ (}Z_t,X_t\\text{: mΩ)}$$
+  $$Z_T=${f(r.ZT,4)},\\ R_T=${f(r.RT,4)},\\ X_T=${f(r.XT,4)}\\text{ mΩ}$$
   ${scBlock('T2 (변압기 2차 모선–간선 접속점)', r.T2sc)}
   $I_{cu}\\ge${f(r.T2.Imax,0)}\\times1.25=${f(r.T2.Imax*1.25/1000,2)}$kA → 표준 <b>${r.Icu} kA</b>
   ${sh('3.3 결과 요약')}
