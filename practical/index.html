@@ -164,6 +164,7 @@ table{max-width:100%}
 <body>
 
 <div class="card main-only">
+  <div style="font-size:12px;margin:0 0 6px"><a href="feeder.html" style="color:#1f6feb;text-decoration:none">▶ 간선 계산서 (실무판)로 이동</a></div>
   <h1>분기회로 계산서 (KEC)</h1>
   <div class="sub" id="intro_txt">계산순서: 부하 → 차단기 → 케이블 → 보호도체(PE). 계산 옵션(기동방식 계수·Y-Δ 전환 돌입·PE 기준)을 선택할 수 있으며, 옵션을 ‘미적용’으로 두면 서적판(M1~M5)과 같은 값이 산출됩니다. 산업용 MCCB·XLPE 케이블 단일도체 한정. 간선 임피던스는 변압기 직결 가정으로 단순화(보수적). 차단기 정격이 400A 초과 시 부하 분리 권고. <b>단상은 3.7kW(비전동기 3.7kVA)까지만 지원</b>하며, 초과 시 3상으로 선정하십시오.</div>
 </div>
@@ -1064,6 +1065,18 @@ window.MathJax = { tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]}, svg:{
 
 // 초기화
 onCommonChange();
+</script>
+<script>
+/* 실무판은 하위 폴더(실무/ 또는 practical/)에 있으므로 곡선 그림 경로 curve/ 를 ../curve/ 로 보정 */
+(function(){
+  function fix(n){
+    if(!n||n.nodeType!==1) return;
+    var list=(n.tagName==='IMG')?[n]:Array.prototype.slice.call(n.querySelectorAll('img'));
+    list.forEach(function(i){var s=i.getAttribute('src'); if(s&&s.indexOf('curve/')===0) i.setAttribute('src','../'+s);});
+  }
+  fix(document.body);
+  new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(fix);});}).observe(document.body,{childList:true,subtree:true});
+})();
 </script>
 </body>
 </html>

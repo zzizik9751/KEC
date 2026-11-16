@@ -163,10 +163,10 @@ table{max-width:100%}
 <div class="wrap">
 <p style="margin:12px 0 0;font-size:13px"><a href="index.html">← 시작 화면</a></p>
 <header class="top">
-  <div class="kicker">KEC-II · 분기회로 계산서 운용 매뉴얼</div>
+  <div class="kicker">KEC-II · 분기회로·간선 계산서 운용 매뉴얼</div>
   <h1>같은 부하를 두 계산서로 계산하고, 결과를 서로 검증하는 방법</h1>
-  <p>처음 쓰는 사람이 서적판(기술지침 절차 재현)과 실무판(단순화)을 열어 입력하고, 결과를 읽고, 두 결과를 비교해 판정하기까지의 순서를 정리했습니다. 예제 숫자는 모두 실제 파일에 입력해 얻은 값입니다.</p>
-  <div class="meta"><span>근거 KECG 1702-2019 부록 5.1.2~5.1.13</span><span>대상 파일 기준일 2026-05-27</span><span>가이드 작성 2026-10-27</span></div>
+  <p>처음 쓰는 사람이 서적판(기술지침 절차 재현)과 실무판(단순화)을 열어 입력하고, 결과를 읽고, 두 결과를 비교해 판정하기까지의 순서를 정리했습니다. 예제 숫자는 모두 실제 파일에 입력해 얻은 값입니다. 변압기 2차에서 분기 분전반까지의 간선 계산서(F1·F2·F3)는 13장에 따로 정리했습니다.</p>
+  <div class="meta"><span>근거 KECG 1702-2019 부록 5.1.2~5.1.13 (분기), 5.1.14~5.1.16 (간선)</span><span>대상 파일 기준일 2026-05-27</span><span>가이드 작성 2026-10-27 (간선 13장 추가 2026-11-16)</span></div>
 </header>
 
 <div class="layout">
@@ -186,6 +186,7 @@ table{max-width:100%}
     <li><a href="#limits">알려진 한계</a></li>
     <li><a href="#faq">문제 해결</a></li>
     <li><a href="#checklist">운용 체크리스트</a></li>
+    <li><a href="#feeder">간선 계산서 (F1·F2·F3)</a></li>
   </ol>
 </nav>
 
@@ -206,6 +207,10 @@ table{max-width:100%}
       <p><b>쓰는 때</b> 일상 설계, 견적, 초기 검토</p>
     </div>
   </div>
+  <div class="note">
+    <b>간선 계산서는 별도입니다</b>
+    <p>위 두 버전은 분기회로(분전반·MCC 이후)를 계산합니다. 변압기 2차 모선에서 분기 분전반까지의 <b>간선</b>은 서적판 F1·F2·F3(기술지침 5.1.14~5.1.16)과 실무판 1종으로 따로 있으며, 사용법은 13장에 있습니다. 간선과 분기는 서로 독립으로 계산하고, 결과가 자동으로 넘어가지는 않습니다.</p>
+  </div>
   <h3>검증의 원리</h3>
   <div class="flow" role="list">
     <div class="st" role="listitem"><b>1</b>같은 부하·포설 조건을 두 계산서에 입력</div><span class="arrow" aria-hidden="true">→</span>
@@ -224,8 +229,10 @@ table{max-width:100%}
 ├─ guide.html               ← 이 가이드
 ├─ finder/index.html        ← 부하조건으로 계산서 찾기 (INDEX)
 ├─ practical/index.html     ← 실무판 (3개 탭)
+├─ practical/feeder.html    ← 실무판 간선 (F1·F2·F3 선택)
 ├─ g1.html ~ g5.html        ← 서적판 비전동기 5종
 ├─ m1.html ~ m7.html        ← 서적판 전동기 7종
+├─ f1.html ~ f3.html        ← 서적판 간선 3종
 ├─ kec_data.js              ← 공용 데이터 (삭제·이동 금지)
 └─ print_engine.js          ← 서적판 A4 출력 엔진 (삭제·이동 금지)</pre>
   <div class="note warn">
@@ -408,11 +415,11 @@ table{max-width:100%}
   <h2><span class="no">10</span>알려진 한계</h2>
   <p class="lead">결과를 해석할 때 알고 있어야 하는 제한입니다.</p>
   <ul>
-    <li><b>실무판 단락전류는 크게 나올 수 있습니다.</b> 간선 임피던스를 무시하므로 서적판보다 큽니다. 3건 모두 F1이 서적판의 3~5배입니다(M3는 59,321A 대 11,793A). 이 때문에 실무판 Icu가 더 큰 정격으로 선정됩니다.</li>
+    <li><b>실무판 단락전류는 크게 나올 수 있습니다.</b> 간선 임피던스를 무시하므로 서적판보다 큽니다. 3건 모두 F1이 서적판의 3~5배입니다(M3는 59,321A 대 11,793A). 이 때문에 실무판 Icu가 더 큰 정격으로 선정됩니다. 간선 계산서(13장)의 F1 단락전류는 현재 분기 계산서에 자동으로 반영되지 않습니다.</li>
     <li><b>보호장치 종류가 다릅니다.</b> 서적판 G2는 주택용 MCB(Icu 16kA), 실무판은 산업용 MCCB(Icu 50kA)입니다. Icu는 비교 대상이 아닙니다.</li>
     <li><b>MCCB 동작시간 tn은 0.1초 가정값입니다.</b> 특성곡선 이미지 5종(<code>MCC 특성곡선*.png</code>)의 데이터화가 아직 남아 있어, 단락보호 판정의 정밀도에 한계가 있습니다.</li>
     <li><b>전압강하는 정식으로 자동 선정합니다.</b> 실무판은 허용전류·기동온도 기준에서 시작해 케이블 R·X를 적용한 운전·기동 전압강하가 허용치를 만족할 때까지 굵기를 올립니다. 단일 케이블 최대 굵기에서도 허용치를 넘는 극단 조건(매우 긴 분기·대용량)에서는 부적정과 경고가 표시되므로 길이 단축·부하 분할·병렬 도체를 검토하세요. 단상은 3.7kW(비전동기 3.7kVA)까지만 지원하며, 허용전류 표가 없는 공사방법·심선수 조합은 안내 문구가 표시됩니다.</li>
-    <li><b>실무판 미지원 항목</b> 병렬도체, BUS DUCT, ACB, 복수회로, PVC 계열 케이블(IV·CV·VV)은 지원하지 않습니다.</li>
+    <li><b>분기 실무판 미지원 항목</b> 병렬도체, BUS DUCT, ACB, 복수회로, PVC 계열 케이블(IV·CV·VV)은 분기 실무판에서 지원하지 않습니다. 병렬도체·BUS DUCT·ACB는 간선 계산서(13장)에서 다룹니다.</li>
     <li><b>유지보수 시</b> <code>kec_data.js</code>를 수정한 뒤에는 파일 끝이 잘리는 일이 반복되었으므로 <code>node --check kec_data.js</code>로 구문을 확인하세요.</li>
   </ul>
 </section>
@@ -446,6 +453,56 @@ table{max-width:100%}
     <li><label><input type="checkbox" id="c8"><span>실무판 400A 경고와 전압강하 판정 줄을 확인했다</span></label></li>
     <li><label><input type="checkbox" id="c9"><span>제출용 산출근거는 인터넷 연결 상태에서 서적판으로 출력했다</span></label></li>
   </ul>
+</section>
+
+
+<section id="feeder">
+  <h2><span class="no">13</span><span class="tag book">서적판</span><span class="tag real">실무판</span>간선 계산서 (F1·F2·F3)</h2>
+  <p class="lead">변압기 2차 모선에서 분기 분전반 접속점까지의 3상 4선 간선을 계산합니다. 설계전류, 차단기(MCCB·ACB) 정격, 선도체 굵기(또는 BUS DUCT 정격), 전압강하, 단락전류와 차단용량, 보호도체를 한 번에 구합니다.</p>
+
+  <h3>구성</h3>
+  <div class="scroll"><table>
+    <tr><th>유형</th><th>간선</th><th>보호장치</th><th>기본 예제 (불러오기)</th></tr>
+    <tr><td>F1 (<code>f1.html</code>)</td><td>단심 케이블 1조</td><td>산업용 MCCB</td><td>HFCO 1C, F 삼각, 80m</td></tr>
+    <tr><td>F2 (<code>f2.html</code>)</td><td>단심 케이블 병렬 (2병렬)</td><td>산업용 ACB</td><td>TFR-CV 1C×2, F 평면, 98m</td></tr>
+    <tr><td>F3 (<code>f3.html</code>)</td><td>절연 BUS DUCT (Al)</td><td>산업용 ACB</td><td>Al BUS DUCT, 150m</td></tr>
+    <tr><td>실무판 (<code>practical/feeder.html</code>)</td><td>위 세 유형을 한 화면에서 선택</td><td>MCCB / ACB</td><td>예제 불러오기에서 F1·F2·F3 선택</td></tr>
+  </table></div>
+
+  <h3>사용 순서</h3>
+  <ol class="steps">
+    <li><b class="t">계산서 열기</b><p>서적판은 <code>f1.html</code>~<code>f3.html</code> 중 해당 유형을, 실무판은 <code>practical/feeder.html</code>을 엽니다. 실무판은 <b>예제 불러오기</b>에서 F1·F2·F3 중 하나를 고르면 기술지침 예제값이 입력됩니다.</p></li>
+    <li><b class="t">입력</b><p>① 선행운전부하(합계 kVA, 수용률, 역률), ② 전원·변압기(단락용량, X/R, 변압기 용량·%Z·X/R), ③ 기동 전동기(정격출력, 효율, 역률, 기동방식, 기동시간), ④ 차단기(보호장치 최소동작시간 t, 규약동작배율 γ, 순시차단배율 δ, ACB 단락 동작시간), ⑤ 간선(케이블 종류, 공사방법, 배열, 병렬도체 수, 길이, 주위온도, 회선수, 허용 전압강하)을 입력합니다.</p></li>
+    <li><b class="t">결과 요약 읽기</b><p>설계전류 I<sub>B</sub>, 기동시 간선전류 I<sub>FS</sub>, 선도체 단면적, <b>병렬도체 수</b>와 병렬 합산 허용전류 I<sub>z</sub>, 차단기 정격 I<sub>n</sub>, 차단용량 I<sub>cu</sub>, 운전·기동 전압강하, T2·F1 단락전류, 보호도체가 카드로 나옵니다. 분기회로와 같이 <b>I<sub>B</sub> ≤ I<sub>n</sub> ≤ I<sub>z</sub></b>와 <b>I<sub>2</sub> ≤ 1.45I<sub>z</sub></b>가 가장 중요한 판정입니다.</p></li>
+    <li><b class="t">산출근거 확인</b><p><b>산출근거 확인 ▼</b>을 누르면 계산 과정이 펼쳐집니다. 서적판은 4~11장 형식(계산기준 → 계산 → 결과 요약)으로 정리되고, 단면적이 바뀌면 그 과정이 표로 남습니다. 실무판 산출근거는 요약 형태이며, 프로젝트명과 회로명을 입력하면 인쇄물 상단에 표시됩니다.</p></li>
+  </ol>
+
+  <h3>기본 예제 결과</h3>
+  <p>서적판과 실무판에 같은 기본 예제를 넣었을 때 아래 값이 같게 나왔습니다.</p>
+  <div class="scroll"><table>
+    <tr><th>항목</th><th>F1</th><th>F2</th><th>F3</th></tr>
+    <tr><td>설계전류 I<sub>B</sub></td><td class="num">490.0 A</td><td class="num">695.1 A</td><td class="num">2,598.8 A</td></tr>
+    <tr><td>기동시 간선전류 I<sub>FS</sub></td><td class="num">1,385.6 A</td><td class="num">2,021.9 A</td><td class="num">5,949.6 A</td></tr>
+    <tr><td>차단기 정격 I<sub>n</sub></td><td class="num">500 A</td><td class="num">800 A</td><td class="num">3,200 A</td></tr>
+    <tr><td>선도체</td><td class="num">300㎟</td><td class="num">300㎟ × 2병렬</td><td class="num">BUS DUCT 4,000 A</td></tr>
+    <tr><td>허용전류 I<sub>z</sub></td><td class="num">524.6 A</td><td class="num">966.6 A (병렬 합산)</td><td class="num">4,000 A</td></tr>
+    <tr><td>운전 / 기동 전압강하</td><td class="num">2.35 % / 4.98 %</td><td class="num">2.87 % / 4.03 %</td><td class="num">2.77 % / 3.07 %</td></tr>
+    <tr><td>T2 최대 단락전류</td><td class="num">44,491 A</td><td class="num">85,704 A</td><td class="num">85,704 A</td></tr>
+    <tr><td>F1 최소 단락전류</td><td class="num">10,622 A</td><td class="num">12,434 A</td><td class="num">33,760 A</td></tr>
+    <tr><td>차단용량 I<sub>cu</sub></td><td class="num">63 kA</td><td class="num">125 kA</td><td class="num">125 kA</td></tr>
+  </table></div>
+
+  <h3>서적판과 실무판의 차이</h3>
+  <ul>
+    <li><b>계산 순서</b> 서적판은 단면적을 먼저 잡고, 보호협조와 전압강하에서 부적정이면 한 단계씩 올려 재계산하는 과정을 보여 줍니다. 실무판은 차단기 정격을 먼저 정한 뒤 케이블(BUS DUCT)을 한 번에 선정하므로 재계산 과정이 없습니다.</li>
+    <li><b>결과</b> 차단기 정격은 케이블 굵기와 무관하게 부하로 정해지므로, 두 방식의 최종 결과는 같습니다. F1·F2는 입력값을 바꾼 비교에서도 최종 단면적, 차단기 정격, 차단용량이 일치했습니다. F3는 기본 예제만 비교했습니다.</li>
+    <li><b>보호도체</b> F3는 서적판이 1000㎟, 실무판이 500㎟×2로 표시하며 합계는 같습니다.</li>
+  </ul>
+
+  <div class="note warn">
+    <b>간선 계산서의 한계</b>
+    <p>간선과 분기는 독립 계산입니다. 분기 계산서의 F1 단락전류에 간선 임피던스는 아직 반영되지 않습니다. 병렬 케이블의 R·X는 F-FR-8 2병렬만 표 5-8을 쓰고 그 외는 단심 R을 병렬 수로 나눈 근사값을 사용하며, 서적판과 약 1% 차이가 날 수 있습니다. ACB 단락 동작시간은 제조사 동작특성곡선에서 읽은 값을 직접 입력합니다. 3상 4선 380V 기준입니다.</p>
+  </div>
 </section>
 
 </main>
