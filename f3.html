@@ -463,8 +463,8 @@ function computeF1(p){
   D.helpers.tnShort = (t,I,d,c)=> t==='ACB' ? {tn:p.tnACB, region:'단시간/순시 영역 (δ='+d.toFixed(1)+')', src:'ACB 제조사 동작특성곡선 판독값(입력)'} : _orig(t,I,d,c);
   let sp0, sp;
   try {
-    sp0 = D.helpers.shortProt({type:'ACB',name:'기중차단기(ACB)',In:In,IF2:F0.Imin,Seff:area[S0],K:Ks,imgW:220});
-    sp  = D.helpers.shortProt({type:'ACB',name:'기중차단기(ACB)',In:In,IF2:Fin.Imin,Seff:area[Sfin],K:Ks,imgW:220});
+    sp0 = D.helpers.shortProt({type:'ACB',acbKey:'ACB-F3-s',name:'기중차단기(ACB)',In:In,IF2:F0.Imin,Seff:area[S0],K:Ks,imgW:220});
+    sp  = D.helpers.shortProt({type:'ACB',acbKey:'ACB-F3-s',name:'기중차단기(ACB)',In:In,IF2:Fin.Imin,Seff:area[Sfin],K:Ks,imgW:220});
   } finally { D.helpers.tnShort = _orig; }
   const tn = sp.tn, ok_tn = sp.ok;
 
@@ -607,7 +607,7 @@ function calc(){
      (2) 기동전류 기준: 기동시간 $t_m=${p.tm}$ s, 보호장치 최소동작시간 $t_{min}=${p.tmin}$ s (기동시간에 50~100% 가산, 가산시간 5 s 이하: ${f(1.5*p.tm,1)}~${f(Math.min(2*p.tm,p.tm+5),1)} s ${(p.tmin>=1.5*p.tm-1e-9&&p.tmin<=Math.min(2*p.tm,p.tm+5)+1e-9)?'<span class="judge-ok">범위 내</span>':'<span class="judge-no">범위 초과</span>'}), 규약동작배율 $\\gamma=${p.gamma}$ (아래 곡선에서 $t_{min}$와 교점 아래측 전류배율)<br>
      &nbsp;&nbsp;&nbsp;$I_n\\ge\\dfrac{I_{FS}}{\\gamma}=\\dfrac{${f(r.IFS,1)}}{${p.gamma}}=${f(r.IFS/p.gamma,1)}$A → ${r.In_start}A<br>
      <b>→ 과부하 보호장치 정격 $I_n=\\max(${r.In_design},${r.In_start})=${r.In_overload}$A</b></div>
-     ${D.helpers.gammaFig('ACB', r.In_overload, p.gamma, p.tmin, 220)}
+     ${D.helpers.gammaFig('ACB', r.In_overload, p.gamma, p.tmin, 220, 'F3')}
      <div class="sh">6.3 보호협조 평가 및 단면적 조정</div>
      <div>$I_B\\le I_n\\le I_z$, $\\ I_2\\le1.45I_z$ ($I_2=${+(D.helpers.i2k('ACB',r.In_overload)).toFixed(2)}\\times${r.In_overload}=${f(D.helpers.i2k('ACB',r.In_overload)*r.In_overload,1)}$A) 평가 — 부적정이면 바로 윗 규격으로 올려 적정이 될 때까지 반복한다.</div>
      <table style="margin:3px 0"><thead><tr><th>단면적 (㎟)</th><th>I<sub>z</sub> (A)</th><th>I<sub>n</sub> ≤ I<sub>z</sub></th><th>I<sub>2</sub> ≤ 1.45I<sub>z</sub></th><th>판정</th></tr></thead><tbody>${r.coordSteps.map((st,i)=>{const ok=st.okC&&st.ok145, _last=i===r.coordSteps.length-1; return `<tr${ok?' class="sel"':''}><td>${st.S}</td><td>${f(st.iz,1)}</td><td>${r.In_overload} A ${st.okC?'≤':'>'} ${f(st.iz,1)} A${st.okC?'':' ✗'}</td><td>${f(st.I2,1)} A ${st.ok145?'≤':'>'} ${f(1.45*st.iz,1)} A${st.ok145?'':' ✗'}</td><td>${ok?'적정'+(r.coordSteps.length>1?' → 선정':''):'<b>부적정</b>'+(_last?' (최대 규격 — 별도 검토 필요)':' → 다음 규격 검토')}</td></tr>`}).join('')}</tbody></table>

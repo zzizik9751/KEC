@@ -541,6 +541,10 @@ window.KEC_DATA.MCB_CURVE = {
     '100-225A':{f:'curve/MCCB_100-225A.png',w:720, h:960, x1:138,   x2:700,   yt:19,   yb:876},
     '250-400A':{f:'curve/MCCB_250-400A.png',w:720, h:960, x1:130,   x2:696.5, yt:13,   yb:886},
     '500-800A':{f:'curve/MCCB_500-800A.png',w:630, h:873, x1:112.5, x2:615,   yt:17.5, yb:790.5},
+    'ACB-F2-g': {f:'curve/ACB_5-30.png', w:440, h:450, x1:129.5, x2:361.5, yt:-53.8, yb:365.0, yv:10, acb:1},
+    'ACB-F2-s': {f:'curve/ACB_5-32.png', w:450, h:495, x1:120.5, x2:358, yt:-23.8, yb:405.4, yv:10, acb:1},
+    'ACB-F3-g': {f:'curve/ACB_5-33.png', w:420, h:465, x1:113.5, x2:345, yt:-27.0, yb:379.5, yv:10, acb:1},
+    'ACB-F3-s': {f:'curve/ACB_5-35.png', w:440, h:475, x1:124.5, x2:370.5, yt:-34.8, yb:384.0, yv:10, acb:1},
     'MCB':     {f:'curve/MCB_IEC60898.png', w:523, h:708, x1:109,   x2:507,   yt:35,   yb:648}
   };
   function curveImg(key, label, delta, tn, W0, cap){
@@ -549,7 +553,7 @@ window.KEC_DATA.MCB_CURVE = {
     let ov = '';
     if (delta >= 1 && delta <= 100 && tn != null && tn >= 0.01){
       const px = (c.x1 + dx*Math.log10(delta))*k, py = (c.yb - dy*Math.log10(tn/0.01))*k;
-      const top = c.yt*k, bot = c.yb*k, left = c.x1*k;
+      const top = (c.yv!=null?c.yv:c.yt)*k, bot = c.yb*k, left = c.x1*k;
       ov = '<div style="position:absolute;left:'+px.toFixed(1)+'px;top:'+top.toFixed(1)+'px;height:'+(bot-top).toFixed(1)+'px;border-left:1.5px dashed #e00000"></div>' +
            '<div style="position:absolute;left:'+left.toFixed(1)+'px;top:'+py.toFixed(1)+'px;width:'+(px-left).toFixed(1)+'px;border-top:1.5px dashed #e00000"></div>' +
            '<div style="position:absolute;left:'+(px-4).toFixed(1)+'px;top:'+(py-4).toFixed(1)+'px;width:8px;height:8px;border-radius:50%;background:#e00000"></div>';
@@ -557,7 +561,7 @@ window.KEC_DATA.MCB_CURVE = {
     return '<div style="text-align:center;margin:6px 0"><div style="position:relative;display:inline-block;width:'+W+'px;height:'+H+'px;line-height:0">' +
            '<img src="'+c.f+'" width="'+W+'" height="'+H+'" alt="'+label+'" style="display:block">' + ov + '</div>' +
            '<div style="font-size:9px;color:#6b7280;line-height:1.4">그림. ' + label + (cap ? ' — ' + cap : ' — 붉은 점선: 차단배율 δ = ' + nf(delta,1) + ', t<sub>n</sub> ≈ ' + sig(tn) + ' s') +
-           (key === 'MCB' ? '' : '<br>※ 그림의 색상 표시(소프트스타터·Y-Δ·직입)는 카탈로그 원본의 기동시간 참고 표기') + '</div></div>';
+           ((key === 'MCB' || c.acb) ? '' : '<br>※ 그림의 색상 표시(소프트스타터·Y-Δ·직입)는 카탈로그 원본의 기동시간 참고 표기') + '</div></div>';
   }
 
   /** 규약동작배율 γ 확인용 곡선 그림 — 최소동작시간 t_min 과 γ 의 교점 표시 (과부하·기동전류 기준). ACB 등 곡선 이미지가 없으면 '' */
@@ -565,6 +569,7 @@ window.KEC_DATA.MCB_CURVE = {
     let key = null, label = '';
     if (type === 'MCCB' && D.MCCB_CURVE.rangeOf(In)) { key = D.MCCB_CURVE.rangeOf(In); label = 'MCCB 동작특성곡선 ' + D.MCCB_CURVE.ranges[key].label + ' (제조사 카탈로그)'; }
     else if (type === 'MCB-house') { key = 'MCB'; label = '주택용 MCB 동작특성곡선 (IEC 60898-1, Type-' + (curve||'C').toUpperCase() + ')'; }
+    else if (type === 'ACB' && (curve === 'F2' || curve === 'F3')) { key = 'ACB-' + curve + '-g'; label = 'ACB 동작특성곡선 (서적 그림 ' + (curve === 'F2' ? '5-30' : '5-33') + ')'; }
     if (!key || !CIMG[key]) return '';
     return curveImg(key, label, gamma, tmin, W,
       '붉은 점선: 최소동작시간 t<sub>min</sub> = ' + nf(tmin,1) + ' s 와 곡선 교점 아래측(하한 곡선) 전류배율 γ = ' + nf(gamma,2) + ' 배 — 곡선에서 γ 확인');
@@ -614,7 +619,7 @@ window.KEC_DATA.MCB_CURVE = {
       '<div>나. 최소 단락전류(F2, 도체 250 ℃): $I_{F2,min} = ' + nf(o.IF2,0) + '$ A</div>' +
       '<div>다. 차단배율: $$\\delta = \\frac{I_{F2,min}}{I_n} = \\frac{' + nf(o.IF2,0) + '}{' + o.In + '} = ' + nf(delta,1) + '$$</div>' +
       '<div>라. 보호장치 동작시간 ' + tnTxt + ' — ' + t.region + '<br><span style="color:#6b7280">근거: ' + t.src + '</span></div>' +
-      (!(t.reading || o.showImg) ? '' : o.type === 'MCCB' && D.MCCB_CURVE.rangeOf(o.In) ? curveImg(D.MCCB_CURVE.rangeOf(o.In), 'MCCB 동작특성곡선 ' + D.MCCB_CURVE.ranges[D.MCCB_CURVE.rangeOf(o.In)].label + ' (제조사 카탈로그)', delta, t.tn, o.imgW) : (o.type === 'MCB-house' ? curveImg('MCB', '주택용 MCB 동작특성곡선 (IEC 60898-1, Type-' + (o.curve||'C').toUpperCase() + ' 순시영역 표시)', delta, t.tn, o.imgW) : '')) +
+      (o.acbKey && CIMG[o.acbKey] ? curveImg(o.acbKey, 'ACB 동작특성곡선 (서적 그림 ' + (o.acbKey === 'ACB-F2-s' ? '5-32' : '5-35') + ')', delta, t.tn, o.imgW, '붉은 점선: 차단배율 δ = ' + nf(delta,1) + ', t<sub>n</sub> ≈ ' + sig(t.tn) + ' s (굵은 십자선은 서적 원본 표시)') : !(t.reading || o.showImg) ? '' : o.type === 'MCCB' && D.MCCB_CURVE.rangeOf(o.In) ? curveImg(D.MCCB_CURVE.rangeOf(o.In), 'MCCB 동작특성곡선 ' + D.MCCB_CURVE.ranges[D.MCCB_CURVE.rangeOf(o.In)].label + ' (제조사 카탈로그)', delta, t.tn, o.imgW) : (o.type === 'MCB-house' ? curveImg('MCB', '주택용 MCB 동작특성곡선 (IEC 60898-1, Type-' + (o.curve||'C').toUpperCase() + ' 순시영역 표시)', delta, t.tn, o.imgW) : '')) +
       '<div>마. 케이블 단락 허용시간: $$t_z = \\left(\\frac{' + Sx + ' \\times ' + o.K + '}{' + nf(o.IF2,0) + '}\\right)^2 = ' + sig(tz) + '\\text{ s}$$</div>' +
       '<div>바. 판정: ' + judge + '</div>';
     return {delta:delta, tz:tz, tn:t.tn, ok:ok, region:t.region, src:t.src, html:html};
