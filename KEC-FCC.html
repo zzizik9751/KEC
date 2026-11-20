@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KEC-FCC — KEC Feeder &amp; Circuit Calculator</title>
+<title>KEC-FCC — KEC Feeder &amp; Circuit Calculator (테스트)</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>window.MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, svg: { fontCache: 'global' } };</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
@@ -196,6 +196,9 @@ body.sb-dragging{cursor:col-resize;user-select:none;}
 .flt-hide,.fold-hide{display:none!important;}
 #feeder-table tbody tr.feeder-row td{height:31px;}
 #feeder-body.rd-on td.col-no{min-width:104px;white-space:nowrap}
+#tab2:not(.fe-editing) .fe-ed{display:none!important;}
+#tab2:not(.fe-editing) #feeder-body input.f-name{cursor:pointer;color:var(--accent-dark);text-decoration:underline dotted;background:transparent;}
+#tab2.fe-editing #feeder-body input.f-name{background:#fffbe6;}
 #feeder-body .rd-h{cursor:grab;color:var(--accent);font-size:13px;margin-right:3px;user-select:none}
 #feeder-body .rd-b{font-size:9px;padding:0 4px;margin-right:2px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;line-height:15px}
 #feeder-body tr.rd-top td{box-shadow:inset 0 2px 0 var(--accent)}
@@ -204,14 +207,14 @@ body.sb-dragging{cursor:col-resize;user-select:none;}
 #btn-reorder.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 #feeder-table tr.fgrp td,#feeder-result-table tr.lv-grp td{text-align:left!important;padding:4px 8px!important;white-space:nowrap;}
 #feeder-result-table tbody tr[data-g] td{height:31px;}
-tr.fgrp td b{color:#ffb74d;}
+tr.fgrp td b{color:#fff3c4;}
 .ctr-tbl th,.ctr-tbl td,#feeder-table th,#feeder-table td,#feeder-result-table th,#feeder-result-table td,#fsum-tbl th,#fsum-tbl td{text-align:center!important;vertical-align:middle;}
 #feeder-table td input,#feeder-table td select{text-align:center;text-align-last:center;}
 #feeder-table th:first-child,#feeder-table td:first-child,#feeder-result-table th:first-child,#feeder-result-table td:first-child{width:36px;min-width:36px;max-width:36px;}
 #feeder-result-table td.lc,#feeder-result-table td.col-name{text-align:center!important;}
 .tree-lv-block.tc-fold > :not(.tree-lv-node){display:none;}
 .tree-node .tn-caret{flex:0 0 auto;width:10px;font-size:9px;color:#e0a24a;font-family:var(--mono);}
-.feeder-row.dp-flash td{animation:dpflash 1.4s ease;}
+.feeder-row.dp-flash td,#feeder-result-table tr.dp-flash td{animation:dpflash 1.4s ease;}
 .tree-node.tree-flash{animation:treeflash 1.6s ease;}
 @keyframes treeflash{0%{background:#c9780c;color:#fff;}100%{background:transparent;}}
 .tree-node{position:relative;display:flex;align-items:center;gap:8px;padding:5px 12px 5px 12px;cursor:pointer;
@@ -381,11 +384,11 @@ tr.fgrp td b{color:#ffb74d;}
   padding:5px 6px!important;line-height:1.25;font-weight:500;font-size:10.5px;white-space:nowrap;letter-spacing:-0.01em;
   print-color-adjust:exact;-webkit-print-color-adjust:exact;}
 .calc-table .g-header th,.res-tbl .g-header th{font-weight:600;}
-.calc-table .g-header th.ih,.res-tbl .g-header th.ih,.calc-table .g-header th.rh{background:#353c43;}
-.calc-table .col-header th,.res-tbl .col-header th{background:var(--tbl-head2)!important;color:var(--ink2)!important;
-  border:1px solid var(--border)!important;border-bottom:1px solid var(--border2)!important;font-weight:500;top:auto!important;}
+.calc-table .g-header th.ih,.res-tbl .g-header th.ih,.calc-table .g-header th.rh{background:var(--tbl-head);}
+.calc-table .col-header th,.res-tbl .col-header th{background:var(--tbl-head)!important;color:#eef1f3!important;
+  border:1px solid #485058!important;font-weight:500;top:auto!important;}
 /* thead 전체가 sticky이므로 2단 헤더는 개별 top 오프셋 불필요 (폰트 높이 차로 인한 틈 제거) */
-.calc-table .col-header th.rc{background:#e3ece5!important;color:var(--ok)!important;}
+.calc-table .col-header th.rc{background:var(--tbl-head)!important;color:#eef1f3!important;}
 .calc-table th[style*="#2a2a27"],.res-tbl th[style*="#2a2a27"]{background:var(--tbl-head)!important;border-color:#485058!important;}
 
 .calc-table td,.res-tbl td,.ref-tbl td,.cfg-tbl td,.bank-tbl td{border:1px solid var(--border);padding:3px 6px!important;
@@ -414,6 +417,8 @@ tr.fgrp td b{color:#ffb74d;}
 
 .calc-table td.col-no,.calc-table th.col-no{position:sticky;left:0;z-index:5;background:var(--surface);min-width:36px;text-align:center;}
 .calc-table td.col-no{font-family:var(--mono);font-size:10.5px;color:var(--muted);}
+.row-btns{display:flex;gap:2px;justify-content:center;}
+#tab3:not(.br-editing) .row-btns,#tab3:not(.br-editing) .br-ed{display:none!important;}
 .calc-table td.col-cno,.calc-table th.col-cno{position:sticky;left:36px;z-index:5;background:var(--surface);width:66px;min-width:66px;max-width:66px;text-align:center;white-space:nowrap;overflow:hidden;}
 .calc-table td.col-cno{font-family:var(--num,var(--mono));font-size:11px;color:var(--ink);}
 .calc-table td.col-name,.calc-table th.col-name{position:sticky;left:102px;z-index:5;background:var(--surface);min-width:100px;}
@@ -449,17 +454,19 @@ button[style*="#e3f2fd"]:hover{background:#e6edf5!important;}
 [style*="color:#1e3a5a"]{color:var(--text)!important;}
 
 /* 저압반 그룹 헤더 */
-.grp-hdr td{background:var(--tbl-head)!important;color:#fff!important;border:1px solid #485058!important;
+.grp-hdr td{background:#808080!important;color:#fff!important;border:1px solid #6e6e6e!important;
   border-left:3px solid var(--accent)!important;padding:6px 12px!important;text-align:left!important;font-family:var(--sans)!important;
   font-size:11.5px!important;}
 .grp-hdr{border-top:none!important;}
-.grp-hdr .grp-toggle{cursor:pointer;font-size:10px;margin-right:6px;display:inline-block;width:14px;color:#e0a24a;}
-.grp-hdr .grp-info{font-size:11px;font-family:var(--mono);color:#b4bcc3;margin-left:8px;}
-.grp-hdr .grp-f1{font-size:11px;font-family:var(--mono);color:#e0a24a;margin-left:14px;}
-.grp-hdr .btn-add-grp{font-size:10.5px;padding:2px 8px;background:transparent;color:#d7dce0;border:1px solid #5a646d;cursor:pointer;margin-left:12px;}
+.grp-hdr .grp-toggle{cursor:pointer;font-size:10px;margin-right:6px;display:inline-block;width:14px;color:#fff;}
+.grp-hdr .grp-info{font-size:11px;font-family:var(--mono);color:#f1f3f5;margin-left:8px;}
+.grp-hdr .grp-f1{font-size:11px;font-family:var(--mono);color:#fff3c4;margin-left:14px;font-weight:600;}
+.grp-hdr .btn-add-grp{font-size:10.5px;padding:2px 8px;background:transparent;color:#fff;border:1px solid #e6e6e6;cursor:pointer;margin-left:12px;}
 .grp-hdr .btn-add-grp:hover{border-color:var(--accent);color:#fff;}
 /* 분전반 인출 묶음 머리행: 전기실(저압반·변압기) 머리행(검정)과 구분되는 진한 회색 */
-#feeder-table tr.fgrp.fsub td,#feeder-result-table tr.lv-sub td{background:#4b5563!important}
+#feeder-table tr.fgrp.fsub td,#feeder-result-table tr.lv-sub td{background:#A6A6A6!important;color:#1f2328!important;border-color:#8f8f8f!important}
+#feeder-table tr.fgrp.fsub td *,#feeder-result-table tr.lv-sub td *{color:#1f2328!important}
+#feeder-table tr.fgrp.fsub td b,#feeder-result-table tr.lv-sub td b{color:#7a3e00!important}
 #feeder-table tr.fgrp td,#feeder-result-table tr.lv-grp td{height:30px!important;box-sizing:border-box}
 .grp-hdr .btn-add-grp{line-height:16px;padding:0 8px!important;vertical-align:middle}
 .grp-collapsed .circuit-row{display:none;}
@@ -674,7 +681,8 @@ button[style*="#e3f2fd"]:hover{background:#e6edf5!important;}
     <button class="btn btn-secondary btn-sm" onclick="navTo(5)" title="프로젝트 정보·설계조건·설계기준(기본설정)">설계기준</button>
     <button class="btn btn-secondary btn-sm" onclick="navTo(1)" title="전기실: 전원조건·변압기·저압반">전기실</button>
     <button class="btn btn-secondary btn-sm" onclick="navTo(2)" title="간선 계산">간선</button>
-    <button class="btn btn-secondary btn-sm" onclick="navTo(3)" title="분기회로 계산">분기</button>
+    <button class="btn btn-secondary btn-sm" onclick="navTo(3)" title="분기회로(동력) 계산">분기(동력)</button>
+    <button class="btn btn-secondary btn-sm" disabled title="분기(일반) 계산서 — 준비 중" style="opacity:.45;cursor:not-allowed">분기(일반)</button>
   </div>
   <div class="act-grp"><span class="act-k">TREE</span>
     <button class="btn btn-secondary btn-sm" onclick="treeExpandAll(true)" title="트리 전체 펼치기">▾ 펼치기</button>
@@ -864,10 +872,9 @@ button[style*="#e3f2fd"]:hover{background:#e6edf5!important;}
       <div class="card-dot"></div>
       <h3>간선 계산 <span style="font-size:10.5px;color:var(--muted);font-weight:400;margin-left:8px;">변압기→저압반, 저압반→분전반 간선회로의 케이블 및 차단기 선정</span></h3>
       <span style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-        <button class="btn btn-secondary btn-sm" onclick="addFeederRow()">＋ 간선 추가</button>
-        <button class="btn btn-secondary btn-sm" onclick="sortFeedersByLV(true)" title="저압반 순서대로 묶어 정렬(하위 분전반은 상위 바로 아래)">↕ 저압반순 정렬</button>
-        <button class="btn btn-secondary btn-sm" id="btn-reorder" onclick="toggleFeederReorder()" title="켜면 각 행에 ☰(끌어서 이동)와 ▲▼가 나타납니다. 같은 전원(저압반) 묶음 안에서만 이동합니다">⇅ 순서 변경</button>
-        <button class="btn btn-secondary btn-sm" onclick="sortFeedersByCid()" title="저압반 묶음 안에서 회로번호 순으로 정렬 (회로번호는 다시 부여하지 않고 입력값 유지)">↕ 회로번호순 정렬</button>
+        <button class="btn btn-secondary btn-sm fe-ed" onclick="sortFeedersByLV(true)" title="저압반 순서대로 묶어 정렬(하위 분전반은 상위 바로 아래)">↕ 저압반순 정렬</button>
+        <button class="btn btn-secondary btn-sm fe-ed" onclick="sortFeedersByCid()" title="저압반 묶음 안에서 회로번호 순으로 정렬 (회로번호는 다시 부여하지 않고 입력값 유지)">↕ 회로번호순 정렬</button>
+        <button class="btn btn-primary btn-sm" id="btn-reorder" onclick="toggleFeederReorder()" title="편집모드: 간선 추가(저압반 묶음 ＋ 간선)·삭제(✕)·순서 변경(☰ 끌기 / ▲▼)·정렬·PNL. NAME 수정. 끝내면 간선 자동 계산">✎ 편집모드</button>
         <span style="margin-left:8px;font-size:10.5px;color:var(--muted);font-family:var(--mono)">KEC 232.3.9  조명 <strong style="color:var(--accent-dark)">6%</strong> / 동력 <strong style="color:var(--accent-dark)">8%</strong></span>
 
         <button class="btn btn-secondary btn-sm" onclick="importFromBranchCircuits()" title="분기회로 부하합계/수용부하/종합역률을 간선에 반영">분기→간선 반영</button>
@@ -890,7 +897,7 @@ button[style*="#e3f2fd"]:hover{background:#e6edf5!important;}
     <tr class="g-header">
       <th rowspan="2" class="col-no">No.</th>
       <th rowspan="2" style="min-width:64px">회로<br>번호<span class="no-print flt-btn" data-col="cid" onclick="openFeederFilter('cid',this)" title="필터">▾</span></th>
-      <th rowspan="2" style="min-width:86px">명칭<span class="no-print flt-btn" data-col="name" onclick="openFeederFilter('name',this)" title="필터">▾</span></th>
+      <th rowspan="2" style="min-width:86px;font-size:10.5px">PNL. NAME<span class="no-print flt-btn" data-col="name" onclick="openFeederFilter('name',this)" title="필터">▾</span></th>
       <th rowspan="2" style="min-width:78px">전원<br>(From)<span class="no-print flt-btn" data-col="from" onclick="openFeederFilter('from',this)" title="필터">▾</span></th>
       <th colspan="7" class="ih">◈ 부하 조건</th>
       <th colspan="5" class="ih">◈ 케이블·공사</th>
@@ -906,6 +913,7 @@ button[style*="#e3f2fd"]:hover{background:#e6edf5!important;}
   <tbody id="feeder-body"></tbody>
   </table>
   </div>
+<div class="no-print kb-tip" style="padding:4px 14px;font-size:11px;color:var(--ink2);">※ 칸 이동: <b>Tab</b> 오른쪽 · <b>Shift+Tab</b> 왼쪽 · <b>Enter</b> 아래 · <b>Shift+Enter</b> 위</div>
 
   <!-- 간선 계산 결과 -->
   <div id="feeder-result-wrap" style="margin-top:16px;">
@@ -925,19 +933,15 @@ button[style*="#e3f2fd"]:hover{background:#e6edf5!important;}
   <div class="t2-toolbar no-print">
     <span class="circuit-count" id="circuit-count">0 회로</span>
     <div class="toolbar-spacer"></div>
-    <div class="grp-sel-wrap">
-      <span>추가할 저압반:</span>
-      <select id="active-lv-sel" style="min-width:120px">
-        <option value="">— 선택 —</option>
-      </select>
-    </div>
-    <button class="btn btn-secondary btn-sm" onclick="addRowToActiveLV()">＋ 회로 추가</button>
+    <select id="active-lv-sel" style="display:none"><option value="">— 선택 —</option></select>
+    <button class="btn btn-secondary btn-sm br-ed" onclick="addRowToActiveLV()" title="새 회로 추가 (분전반 지정 후 자동 정렬)">＋ 회로 추가</button>
+    <button class="btn btn-primary btn-sm" id="br-edit-btn" onclick="brToggleEdit()" title="행 이동·복사·삭제 버튼 표시">✎ 회로 편집</button>
     <button class="btn btn-secondary btn-sm no-print" onclick="sortByDP()" title="저압반 순서 → 간선 순서로 분전반/동력반끼리 묶고, 분전반별 부하합계·최대 전동기를 간선에 자동 반영">⇅ 분전반 정렬</button>
     <button class="btn-run no-print" onclick="runCalc()">계산 실행</button>
   </div>
   <div id="dp-sync-status" class="no-print" style="display:none;padding:4px 14px;font-size:11px;color:var(--ink2);background:var(--accent-light);border-bottom:1px solid var(--border);">
   </div>
-  <div class="sec-title">분기 입력 DATA</div>
+  <div class="sec-title">분기(동력) 입력 DATA</div>
   <div class="table-wrap">
   <table class="calc-table" id="calc-table">
   <thead>
@@ -969,13 +973,14 @@ button[style*="#e3f2fd"]:hover{background:#e6edf5!important;}
   <tbody id="input-body"></tbody>
   </table>
   </div>
+<div class="no-print kb-tip" style="padding:4px 14px;font-size:11px;color:var(--ink2);">※ 칸 이동: <b>Tab</b> 오른쪽 · <b>Shift+Tab</b> 왼쪽 · <b>Enter</b> 아래 · <b>Shift+Enter</b> 위</div>
   <div class="foot-note">
     공사방법(KEC 표 B.52.1): A1=관내단심 / A2=관내다심 / B1=덕트단심 / B2=덕트다심 / E=공중다심 / F=공중단심 / D=직매 &nbsp;<span class="no-print">|&nbsp;
     '계산 실행' 버튼을 누르면 결과 탭에 표시</span>
   </div>
 
   <div id="result-section" style="margin-top:22px;">
-  <div class="sec-label">▶ 분기회로 계산결과</div>
+  <div class="sec-label">▶ 분기(동력) 계산결과</div>
   <div class="t3-toolbar no-print">
     <span class="circuit-count" id="result-count" style="color:var(--ok);font-weight:600;">분기회로 계산결과 없음 (입력 탭에서 계산 실행)</span>
     <div class="toolbar-spacer"></div>
@@ -983,7 +988,7 @@ button[style*="#e3f2fd"]:hover{background:#e6edf5!important;}
     <button class="btn-run no-print" onclick="runCalc()">↻ 재계산</button>
     <button class="btn btn-secondary btn-sm no-print" onclick="showSummary()" title="회로·차단기·케이블·전선관 요약표">▤ 결과 요약</button>
   </div>
-  <div class="sec-title">분기 계산 결과</div>
+  <div class="sec-title">분기(동력) 계산 결과</div>
   <div class="result-table-wrap">
   <table class="res-tbl" id="result-table">
   <thead>
@@ -2379,13 +2384,23 @@ function refreshGroupHeaders() {
 }
 
 // ── 현재 저압반에 회로 추가 ──────────────────────────────────────
-function addRowToActiveLV(preset) {
+function brToggleEdit(on) {
+  const t = document.getElementById('tab3'); if (!t) return;
+  const v = on === undefined ? !t.classList.contains('br-editing') : !!on;
+  t.classList.toggle('br-editing', v);
+  const b = document.getElementById('br-edit-btn'); if (b) b.textContent = v ? '✔ 편집 완료' : '✎ 회로 편집';
+}
+function addRowToActiveLV(preset, forceLv) {
   const sel = document.getElementById('active-lv-sel');
-  const lvId = sel ? sel.value : '';
-  if (!lvId) { alert('먼저 추가할 저압반을 선택하세요.'); return; }
+  // 저압반 선택 없이: 마지막 회로의 저압반 → 없으면 첫 저압반 (분전반 지정 후 자동 정렬로 소속 저압반 보정)
+  const lastRow = [...document.querySelectorAll('#input-body tr.circuit-row')].pop();
+  const lvId = forceLv || (lastRow && lastRow.dataset.lv) || (sel && sel.value) || (sel && sel.options[0] ? sel.options[0].value : '');
+  if (!lvId) { alert('먼저 전기실 탭에서 저압반을 등록하세요.'); return; }
   ensureGroupHeader(lvId);
   addRow(preset, lvId);
   updateDPDropdowns();  // 새 행의 분전반 드롭다운 즉시 갱신
+  const nr = [...document.querySelectorAll(`#input-body tr.circuit-row[data-lv="${lvId}"]`)].pop();
+  if (nr) { if (nr.scrollIntoView) nr.scrollIntoView({block: 'nearest'}); nr.classList.remove('dp-flash'); void nr.offsetWidth; nr.classList.add('dp-flash'); }
 }
 
 // ── 그룹 헤더 없으면 생성 ────────────────────────────────────────
@@ -2408,7 +2423,7 @@ function ensureGroupHeader(lvId) {
     <strong style="color:#fff;letter-spacing:.03em">${nm}</strong>
     <span class="grp-info">(${kva}kVA)</span>
     <span class="grp-f1">F2 Isc_max: ${f2}</span>
-    <button class="btn-add-grp" onclick="(()=>{document.getElementById('active-lv-sel').value='${lvId}';addRowToActiveLV();})()">＋ 회로</button>
+    <button class="btn-add-grp br-ed" onclick="addRowToActiveLV(undefined,'${lvId}')">＋ 회로</button>
   </td>`;
   tbody.appendChild(hdrTr);
 }
@@ -2778,16 +2793,49 @@ function decorateReorder() {
       : String(i + 1);
   });
   const b = document.getElementById('btn-reorder');
-  if (b) { b.classList.toggle('on', REORDER_ON); b.textContent = REORDER_ON ? '⇅ 순서 변경 끝내기' : '⇅ 순서 변경'; }
+  if (b) { b.classList.toggle('on', REORDER_ON); b.textContent = REORDER_ON ? '✔ 편집 완료' : '✎ 편집모드'; }
+  const t2 = document.getElementById('tab2'); if (t2) t2.classList.toggle('fe-editing', REORDER_ON);
+  feederRows().forEach(r => { const n = r.querySelector('.f-name'); if (n) n.readOnly = !REORDER_ON; });
 }
 function toggleFeederReorder() {
   if (!REORDER_ON) { REORDER_ON = true; decorateReorder(); return; }
   REORDER_ON = false; decorateReorder();
-  if (!confirm('회로번호를 현재 순서대로 다시 부여할까요?\n(취소하면 번호는 그대로 둡니다.)')) return;
-  const locked = feederRows().filter(r => r.dataset.cidManual === '1');
-  if (locked.length && confirm('직접 입력했거나 고정된 번호 ' + locked.length + '개도 함께 다시 부여할까요?\n[확인] 모두 다시 부여   [취소] 고정된 번호는 유지')) locked.forEach(r => { r.dataset.cidManual = '0'; });
-  renumberFeederIds(); if (typeof renderTree === 'function') renderTree(); scheduleTrCap();
-  if (typeof LAST_FEEDERS !== 'undefined' && LAST_FEEDERS.length) runFeederCalc();
+  if (confirm('회로번호를 현재 순서대로 다시 부여할까요?\n(취소하면 번호는 그대로 둡니다.)')) {
+    const locked = feederRows().filter(r => r.dataset.cidManual === '1');
+    if (locked.length && confirm('직접 입력했거나 고정된 번호 ' + locked.length + '개도 함께 다시 부여할까요?\n[확인] 모두 다시 부여   [취소] 고정된 번호는 유지')) locked.forEach(r => { r.dataset.cidManual = '0'; });
+    renumberFeederIds();
+  }
+  updateDPDropdowns(); updateFromDropdown(); if (typeof renderTree === 'function') renderTree(); scheduleTrCap();
+  runFeederCalc();                                   // 편집 종료 → 간선 자동 계산
+}
+// ── 입력 표: Enter = 같은 열 아래 행, Shift+Enter = 위 행 (엑셀식). 숨김·접힘·머리행은 건너뜀 ──
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.isComposing || e.altKey || e.ctrlKey || e.metaKey) return;
+  const el = e.target; if (!el || !/^(INPUT|SELECT)$/.test(el.tagName) || /^(button|checkbox|radio|file|submit)$/i.test(el.type || '')) return;
+  const td = el.closest('td'), tr = td && td.parentElement, tb = tr && tr.parentElement;
+  if (!tb || tb.tagName !== 'TBODY' || !tr.className) return;
+  const cls = tr.className.split(/\s+/)[0], col = td.cellIndex, n = tr.cells.length;
+  const shown = r => !r.classList.contains('fold-hide') && !r.classList.contains('flt-hide') && getComputedStyle(r).display !== 'none';
+  const rows = [...tb.rows].filter(r => r.classList.contains(cls) && r.cells.length === n && shown(r));
+  const fld = c => [...c.querySelectorAll('input,select')].find(x => x.type !== 'hidden' && !x.disabled && x.style.display !== 'none' && getComputedStyle(x).display !== 'none');
+  e.preventDefault();
+  for (let i = rows.indexOf(tr) + (e.shiftKey ? -1 : 1); i >= 0 && i < rows.length; i += e.shiftKey ? -1 : 1) {
+    const f = rows[i].cells[col] && fld(rows[i].cells[col]);
+    if (f) { f.focus(); if (f.select && f.tagName === 'INPUT') try { f.select(); } catch (x) {} return; }
+  }
+  el.blur(); el.focus();                              // 마지막 행: 이동 없이 입력값만 확정(change)
+}, true);
+// 간선 입력 DATA의 PNL. NAME 클릭 → 간선 계산 결과의 해당 행으로 이동
+function feederGoResult(name) {
+  name = String(name || '').trim(); if (!name) return;
+  const find = () => [...document.querySelectorAll('#feeder-result-table td[onclick^="treeRevealDP"]')].find(t => t.textContent.trim() === name);
+  let td = find();
+  if (!td) { runFeederCalc(); td = find(); }
+  if (!td) return;
+  const tr = td.closest('tr');
+  tr.classList.remove('fold-hide', 'flt-hide');
+  try { tr.scrollIntoView({block: 'center', behavior: 'smooth'}); } catch (e) { if (tr.scrollIntoView) tr.scrollIntoView(); }
+  tr.classList.remove('dp-flash'); void tr.offsetWidth; tr.classList.add('dp-flash');
 }
 function feederSameFrom(a, b) { return (a.querySelector('.f-from')?.value || '').trim() === (b.querySelector('.f-from')?.value || '').trim(); }
 function feederRegroup() {   // DOM 순서를 기준으로 하위 분전반 간선이 상위 바로 아래 오도록 재정렬 → 변압기 계산서·결과 표 동기화
@@ -2881,7 +2929,7 @@ function refreshFeederGroups() {
       <strong style="color:#fff;letter-spacing:.03em">${esc(g || '(전원 미지정)')}</strong>
       <span class="grp-info">(${kvaTxt}kVA)</span>
       <span class="grp-f1">${f2lab} Isc_max: ${f2}</span>
-      <button class="btn-add-grp" onclick="addFeederToGroup('${gq}')">＋ 간선</button>
+      <button class="btn-add-grp fe-ed" onclick="addFeederToGroup('${gq}')">＋ 간선</button>
     </td>`;
     r.before(tr);
   });
@@ -3117,7 +3165,7 @@ function renderTrCap(dry) {
         for (let g = 0; q.length && g < 400; g++) {
           const par = q.shift(), pn = nmOf(par); if (!pn) continue;
           const kids = feeders.filter(c => !seenR.has(c) && frOf(c) === pn); if (!kids.length) continue;
-          body += `<tr><td colspan="8" style="text-align:left!important;background:#4b5563;color:#fff;font-weight:700;">${esc(l.label)} → ${esc(pn)} <span style="font-weight:400;opacity:.85">— 참고(상위 ${esc(pn)} 수용부하에 포함, 합산 제외)</span></td></tr>`;
+          body += `<tr><td colspan="8" style="text-align:left!important;background:#A6A6A6;color:#1f2328;font-weight:700;">${esc(l.label)} → ${esc(pn)} <span style="font-weight:400;opacity:.85">— 참고(상위 ${esc(pn)} 수용부하에 포함, 합산 제외)</span></td></tr>`;
           kids.forEach(c => {
             seenR.add(c); q.push(c);
             const kv = +c.querySelector('.f-kva')?.value || 0, dm = +c.querySelector('.f-demand')?.value || 80;
@@ -3245,7 +3293,7 @@ function addFeederRow(preset) {
   tr.innerHTML = `
     <td class="col-no" style="text-align:center">${feederCount}</td>
     <td><input type="text" class="f-cid" value="${esc(p.cid||'')}" placeholder="자동" title="저압반명 기준 자동 부여 (직접 입력하면 고정, 비우면 다시 자동)" oninput="this.closest('tr').dataset.cidManual = this.value ? '1' : '0'; if (!this.value) renumberFeederIds(); scheduleTrCap();" style="width:62px;font-size:11px;text-align:center"></td>
-    <td><input type="text" class="f-name" value="${p.name||'F-'+feederCount}" style="width:80px;font-size:11px" oninput="updateDPDropdowns();updateFromDropdown()"></td>
+    <td><input type="text" class="f-name" value="${p.name||'F-'+feederCount}"${REORDER_ON ? '' : ' readonly'} style="width:80px;font-size:11px" oninput="updateDPDropdowns();updateFromDropdown()" onclick="if (!REORDER_ON) feederGoResult(this.value)"></td>
     <td><select class="f-from" style="width:88px;font-size:11px" onchange="onFeederFromChange(this)"><option value="">— 선택 —</option></select></td>
     <td style="text-align:center"><select class="f-loadtype" style="width:48px;font-size:10px" onchange="this.closest('tr').dataset.ltManual='1';autoFeederVD(this.closest('tr'))">
       <option value="기타동력"${(p.loadtype||'기타동력')==='기타동력'?' selected':''}>동력</option>
@@ -3266,7 +3314,7 @@ function addFeederRow(preset) {
     <td>${makeSelect('f-arr',[['trefoil','삼각'],['flat','수평']],arr)}</td>
     <td>${makeSelect('f-cbtype',[['주택용','주택용'],['산업용','산업용'],['누전차단기','ELB']],cbType)}</td>
     <td class="no-print" style="text-align:center">
-      <button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove();renumberFeederIds();updateDPDropdowns();renderTree();refreshFeederGroups();">✕</button>
+      <button class="btn btn-danger btn-sm fe-ed" onclick="this.closest('tr').remove();renumberFeederIds();updateDPDropdowns();renderTree();refreshFeederGroups();">✕</button>
     </td>
   `;
   tbody.appendChild(tr);
@@ -3726,7 +3774,7 @@ function runFeederCalc0() {
           <strong style="color:#fff;letter-spacing:.03em">${esc(g || '(전원 미지정)')}</strong>
           <span class="grp-info">(${kvaTxt}kVA)</span>
           <span class="grp-f1">${f2lab} Isc_max: ${f2}</span>
-          <span class="grp-info">간선 ${lvCnt[g] || 0}회로 · <b style="color:#e0a24a">수용부하 합계 ${(lvTot[g] || 0).toFixed(1)} kVA</b>${bankInfo}</span>
+          <span class="grp-info">간선 ${lvCnt[g] || 0}회로 · <b style="color:#fff3c4">수용부하 합계 ${(lvTot[g] || 0).toFixed(1)} kVA</b>${bankInfo}</span>
         </td></tr>`;
       }
     }
@@ -4151,7 +4199,7 @@ function addRow(preset, lvId) {
     <td>${makeSelect('s-cbtype',[['주택용','주택용'],['산업용','산업용'],['누전차단기','ELB']],'산업용')}</td>
     <td><input type="number" class="i-vdpct w50" value="${p.vdpct||(isMotor?3:2)}" min="0.5" max="5" step="0.5" title="말단 분기 기본: 일반부하 2%, 동력(전동기) 3%"></td>
     <td class="col-rem" style="text-align:center;min-width:76px">
-      <div class="row-btns" style="display:flex;gap:2px;justify-content:center;">
+      <div class="row-btns">
         <button class="btn btn-secondary btn-sm" onclick="moveRow(this,-1)" title="위로" style="padding:2px 5px;font-size:10px;line-height:1;">▲</button>
         <button class="btn btn-secondary btn-sm" onclick="moveRow(this,1)"  title="아래로" style="padding:2px 5px;font-size:10px;line-height:1;">▼</button>
         <button class="btn btn-secondary btn-sm" onclick="copyRow(this)"   title="복사" style="padding:2px 5px;font-size:10px;line-height:1;background:#1a2a3a;color:#8ec8e8;border-color:#2a4a6a;">⧉</button>
@@ -4501,7 +4549,7 @@ const PRINT_META = {
   1: { orientation: 'portrait',  label: '전기실' },
   2: { orientation: 'landscape', label: '간선 계산' },
   3: { orientation: 'landscape', label: '분기회로 입력·계산결과' },
-  4: { orientation: 'landscape', label: '분기회로 계산결과' },
+  4: { orientation: 'landscape', label: '분기(동력) 계산결과' },
   5: { orientation: 'portrait',  label: '프로젝트 정보·설계기준' },
   6: { orientation: 'portrait',  label: '참조 DATA' }
 };
@@ -6488,7 +6536,7 @@ function verifyInPractical(idx) {
       M_cable:cable, M_wiring:wiring, M_cores:String(cores), M_arr:'삼각', M_L:+q('.i-len') || 30,
       M_Ta:temp, M_Nc:String(Math.min(6, +q('.i-group') || 1)), M_emax:+q('.i-vdpct') || 3, M_emaxSt:CALC_K.emaxSt};
   }
-  window.open('실무/KEC_분기_실무.html#kecv=' + encodeURIComponent(JSON.stringify(P)), '_blank');
+  window.open('practical/index.html#kecv=' + encodeURIComponent(JSON.stringify(P)), '_blank');
 }
 // Tree 기동방식 키 → 실무 간선판 기동방식 (Soft Start·Inverter 는 β=6.0 기준 전류비로 정의되어 있어 β를 6.0으로 맞춤)
 function startModeForPractical(sk, v) {
@@ -6516,7 +6564,7 @@ function verifyFeederF0(row, f) {
   if (f.rolledUp) notes.push('하위 분전반 합산 수용부하 ' + f.Seff.toFixed(1) + ' kVA를 부하합계×수용률로 환산 입력');
   if (f.cbType === '주택용') notes.push('Tree 차단기 주택용 — 실무판은 산업용 기준');
   const P = {kind: 'F', name: f.name, v, notes, exp: {IB: +(+f.IB).toFixed(1), IN: f.IN, sz: f.sz, pe: f.pe}};
-  window.open('실무/KEC_간선_실무.html#kecv=' + encodeURIComponent(JSON.stringify(P)), '_blank');
+  window.open('practical/feeder.html#kecv=' + encodeURIComponent(JSON.stringify(P)), '_blank');
 }
 function verifyFeederInPractical(idx) {
   const row = document.querySelectorAll('#feeder-body tr.feeder-row')[idx];
@@ -6577,7 +6625,7 @@ function verifyFeederInPractical(idx) {
   const minNote = (DESIGN_SET.fMinCB && rawIN < DESIGN_SET.fMinCB) ? 'Tree 간선 최소 차단기 ' + DESIGN_SET.fMinCB + 'A·최소 도체 ' + DESIGN_SET.fMinSz + '㎟ 적용(설계기준) — 실무판 미적용' : '';
   const P = {kind: 'F', name: f.name, v, notes: [note, motorMsg, minNote].filter(Boolean),
     exp: {IB: +(+f.IB).toFixed(1), IN: f.IN, sz: f.sz, pe: f.pe}};
-  window.open('실무/KEC_간선_실무.html#kecv=' + encodeURIComponent(JSON.stringify(P)), '_blank');
+  window.open('practical/feeder.html#kecv=' + encodeURIComponent(JSON.stringify(P)), '_blank');
 }
 function exportSummaryXlsx() {
   if (typeof XLSX === 'undefined') { alert('Excel 라이브러리를 불러오지 못했습니다.'); return; }
@@ -6633,7 +6681,7 @@ function printSummary() {
       <label><input type="checkbox" class="pa-chk" value="5" checked> 프로젝트 정보 · 설계기준 <small>(A4 세로)</small></label>
       <label><input type="checkbox" class="pa-chk" value="1" checked> 전기실 (전원조건·변압기·저압반) <small>(A4 세로)</small></label>
       <label><input type="checkbox" class="pa-chk" value="2" checked> 간선 계산서 <small>(A4 가로)</small></label>
-      <label><input type="checkbox" class="pa-chk" value="3" checked> 분기 계산서 — 입력 + 계산결과 <small>(A4 가로)</small></label>
+      <label><input type="checkbox" class="pa-chk" value="3" checked> 분기(동력) 계산서 — 입력 + 계산결과 <small>(A4 가로)</small></label>
       <label><input type="checkbox" class="pa-chk" value="6" checked> 참조 DATA <small>(A4 세로, 마지막 단계)</small></label>
     </div>
     <div class="pa-body" style="border-top:1px solid var(--border);padding-top:8px;">
