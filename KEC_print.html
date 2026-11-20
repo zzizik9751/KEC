@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KEC 분기계산서 — 출력</title>
+<script>window.MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, svg: { fontCache: 'global' } };</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<script src="print_engine_cc.js"></script>
+<style>
+@font-face{font-family:'Liberation Sans Narrow';font-style:normal;font-weight:400;font-display:swap;src:local('Liberation Sans Narrow'),local('LiberationSansNarrow-Regular'),url('fonts/LiberationSansNarrow-Regular.woff2') format('woff2');}
+@font-face{font-family:'Liberation Sans Narrow';font-style:normal;font-weight:700;font-display:swap;src:local('Liberation Sans Narrow Bold'),local('LiberationSansNarrow-Bold'),url('fonts/LiberationSansNarrow-Bold.woff2') format('woff2');}
+/* 표 안 영문·숫자: Arial Narrow → Liberation Sans Narrow(동봉 웹폰트), 한글은 다음 글꼴로 자동 대체 */
+:root{--num:'Arial Narrow','Liberation Sans Narrow','Pretendard','Nanum Gothic','Malgun Gothic','맑은 고딕',sans-serif;}
+table,table th,table td,table input,table select,table textarea,table button{font-family:var(--num)!important;}
+
+  /* ── 기본 리셋 ───────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif;
+    font-size: 11px;
+    background: #fff;
+    color: #1f2937;
+  }
+
+  /* ── 로딩 오버레이 ──────────────────────────────── */
+  #loading-overlay {
+    position: fixed; inset: 0;
+    background: #fff;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px;
+    z-index: 9999;
+    font-size: 13px; color: #6b7280;
+  }
+  #loading-overlay .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── 오류 메시지 ────────────────────────────────── */
+  #error-box {
+    display: none;
+    position: fixed; inset: 0;
+    background: #fff;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+    font-size: 13px; color: #ef4444;
+  }
+  #error-box.visible { display: flex; }
+
+  /* ── 소스 컨테이너(숨김) ──────────────────────────
+     print_engine.js 는 이 div 의 children 을 블록으로 조판한다.
+     화면에서는 visibility:hidden 으로 숨기되 크기는 유지해야
+     measureHeight() 가 정확하게 동작한다.                      */
+  #kec-print-source {
+    position: absolute;
+    left: -99999px; top: 0;
+    visibility: hidden;
+    /* 너비는 JS에서 orientation에 맞게 동적 설정 */
+    width: 1024px;
+  }
+
+  /* ── 인쇄 소스: 전역 흑백 기준 ────────────────────
+     inline style 로 남아 있는 색상도 JS(stripColors)로
+     제거하므로 CSS 는 구조 스타일에만 집중.           */
+  #kec-print-source * {
+    color: #000 !important;
+    background: transparent !important;
+    border-color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── 표 ─────────────────────────────────────────── */
+  #kec-print-source table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;        /* 10px → 9px: 넓은 컬럼 표 대응 */
+    table-layout: auto;
+  }
+  #kec-print-source th,
+  #kec-print-source td {
+    border: 1px solid #000 !important;
+    padding: 2px 4px;      /* 3px 5px → 2px 4px */
+    vertical-align: middle;
+    word-break: keep-all;  /* 단어 중간 잘림 방지; white-space nowrap 제거 */
+  }
+  #kec-print-source th {
+    background: #e0e0e0 !important;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;   /* 헤더 행은 줄바꿈 없이 */
+  }
+  /* 기동방식 기본값 표: 값 가운데 정렬 */
+  #kec-print-source #ds-start-tbl th,
+  #kec-print-source #ds-start-tbl td { text-align: center !important; }
+
+  /* 전원 임피던스 결과: 한 줄 4카드 */
+  #kec-print-source .imp-row {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1px solid #000; border-bottom: none; margin-bottom: 6px;
+  }
+  #kec-print-source .imp-card2 {
+    padding: 3px 5px; border-right: 1px solid #000; border-bottom: 1px solid #000;
+    break-inside: avoid; page-break-inside: avoid; min-width: 0;
+  }
+  #kec-print-source .imp-card2:nth-child(4n) { border-right: none; }
+  #kec-print-source .imp-card2 .i-label { font-size: 8px; }
+  #kec-print-source .imp-card2 .i-val   { font-size: 10.5px; font-weight: 700; }
+  #kec-print-source .imp-card2 .i-unit  { font-size: 8px; margin-left: 2px; }
+  #kec-print-source .imp-card2 .i-sub   { font-size: 7.5px; overflow-wrap: anywhere; }
+  #kec-print-source .imp-sec-title {
+    font-size: 9.5px; font-weight: 700; margin: 6px 0 2px; padding: 0;
+    border: none; border-bottom: 1px solid #000;
+  }
+
+  /* 수동 변경된 셀(강제값): 연회색 구분 */
+  #kec-print-source td.forced-cell {
+    background: #d0d0d0 !important;
+  }
+
+  /* ── 카드·섹션 헤더 ─────────────────────────────── */
+  #kec-print-source .card { margin-bottom: 10px; }
+  #kec-print-source .card-header {
+    display: flex; align-items: center;
+    padding: 3px 8px;
+    border-bottom: 2px solid #000 !important;
+    background: transparent !important;
+    margin-bottom: 4px;
+  }
+  #kec-print-source .card-dot  { display: none; }
+  #kec-print-source .card-body {
+    padding: 6px 10px;
+    border: 1px solid #888 !important;
+  }
+  #kec-print-source h3 {
+    font-size: 11px; font-weight: 700;
+  }
+
+  /* ── 설계조건(Tab1) 필드 레이아웃 ──────────────── */
+  #kec-print-source .t1-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 6px;
+  }
+  #kec-print-source .field {
+    display: flex; align-items: baseline; gap: 8px;
+    margin-bottom: 4px; font-size: 10px;
+  }
+  #kec-print-source .field label {
+    min-width: 120px; font-weight: 700;
+  }
+
+  /* ── 참조DATA 레이아웃 ──────────────────────────── */
+  /* ref-grid: 2-컬럼 가로 배치 (온도보정계수 + 복수회로 등) */
+  #kec-print-source .ref-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  #kec-print-source .ref-card { margin-bottom: 10px; }
+  #kec-print-source .ref-card-hdr {
+    padding: 3px 8px;
+    border-bottom: 2px solid #000 !important;
+    background: transparent !important;
+    font-size: 11px; font-weight: 700;
+    margin-bottom: 4px;
+  }
+  /* overflow-x:auto 스크롤 해제 */
+  #kec-print-source [style*="overflow-x"] { overflow-x: visible !important; }
+
+  /* ── 스크롤 컨테이너 해제 ───────────────────────── */
+  #kec-print-source .table-wrap,
+  #kec-print-source .result-table-wrap { overflow: visible; }
+
+  /* ── 변환된 값 span ─────────────────────────────── */
+  #kec-print-source span.pv { font-size: 9px; }
+
+  /* ── OK/NG/경고 텍스트 구분 (흑백에서 굵기·기울기 사용) */
+  #kec-print-source .res-ng   { font-weight: 700; }
+  #kec-print-source .res-warn { font-style: italic; }
+
+  /* ── @media print: 소스 숨기고 kec-print-root 만 노출 ── */
+  @media print {
+    #loading-overlay, #error-box, #kec-print-source { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 로딩 중 오버레이 -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div id="loading-msg">출력 데이터 준비 중...</div>
+</div>
+
+<!-- 오류 표시 -->
+<div id="error-box">
+  <div id="error-msg">데이터를 불러올 수 없습니다.</div>
+  <div style="font-size:11px;color:#6b7280;">KEC_분기계산서.html 에서 인쇄 버튼을 눌러 다시 시도하세요.</div>
+</div>
+
+<!-- 조판 소스 (숨김 컨테이너) -->
+<div id="kec-print-source"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── 1. sessionStorage 에서 데이터 로드 ──────────────────────
+  var raw = sessionStorage.getItem('kec_print_data');
+  if (!raw) {
+    showError('출력 데이터가 없습니다.<br>KEC_분기계산서.html 에서 🖨️ 인쇄 버튼을 눌러주세요.');
+    return;
+  }
+
+  var data;
+  try { data = JSON.parse(raw); }
+  catch (e) { showError('데이터 파싱 오류: ' + e.message); return; }
+
+  // 사용 후 제거 (다음 실수 방지)
+  sessionStorage.removeItem('kec_print_data');
+
+  // ── 2. 소스 컨테이너에 HTML 주입 (단일 구간 또는 복수 구간) ──
+  var src = document.getElementById('kec-print-source');
+  document.title = data.fileTitle || data.title || 'KEC 분기계산서';   // PDF 저장 시 기본 파일명
+  var MM = 96 / 25.4;
+  function widthFor(ori) { return Math.floor(((ori === 'landscape' ? 297 : 210) - 26) * MM); }
+  var COLOR_PROPS = ['color','background','background-color','border-color','border'];
+  function prepSource(el) {
+    // 인라인 색상 2차 완전 제거 (흑백 보장)
+    var styledEls = el.querySelectorAll('[style]');
+    for (var i = 0; i < styledEls.length; i++) {
+      var e2 = styledEls[i];
+      var cleaned = (e2.getAttribute('style') || '').split(';').filter(function(prop) {
+        var key = prop.split(':')[0].trim().toLowerCase();
+        return key && COLOR_PROPS.indexOf(key) === -1;
+      }).join(';');
+      if (cleaned.trim()) e2.setAttribute('style', cleaned); else e2.removeAttribute('style');
+    }
+    // 단일 래퍼 컨테이너 unwrap
+    for (var d = 0; d < 3; d++) {
+      if (el.children.length !== 1) break;
+      var wrap = el.firstElementChild;
+      if (wrap.children.length <= 1) break;
+      while (wrap.firstChild) el.appendChild(wrap.firstChild);
+      wrap.remove();
+    }
+  }
+  var multiItems = null;
+  if (data.sections && data.sections.length) {
+    multiItems = data.sections.map(function (sec) {
+      var el = document.createElement('div');
+      el.style.width = widthFor(sec.orientation) + 'px';
+      el.innerHTML = sec.html || '';
+      src.appendChild(el);
+      prepSource(el);
+      return { el: el, orientation: sec.orientation, title: sec.title, subtitle: sec.subtitle || '', date: data.date || '', author: data.author || '' };
+    });
+  } else {
+    src.innerHTML = data.html || '';
+    src.style.width = widthFor(data.orientation) + 'px';
+    prepSource(src);
+  }
+
+  setMsg('레이아웃 조판 중...');
+  // 연속 인쇄 안내 (화면 전용, 인쇄되지 않음)
+  (function () {
+    var cur = (data.sections || []).map(function (s) { return String(s.title || '').split('—').pop().trim(); }).join(' · ') || String(data.title || '').split('—').pop().trim();
+    var nxt = (data.queue && data.queue.length) ? (data.queue[0].sections || []).map(function (s) { return String(s.title || '').split('—').pop().trim(); }).join(' · ') + ' (가로)' : (data.next ? '참조 DATA' : '');
+    var bar = document.createElement('div');
+    bar.id = 'kec-seq-guide';
+    bar.setAttribute('style', 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1f6feb;color:#fff;font:13px/1.6 sans-serif;padding:8px 14px;text-align:center');
+    bar.innerHTML = '🖨 지금 인쇄: <b>' + cur + '</b> &nbsp;— 인쇄(PDF 저장)를 마친 뒤 본 화면의 <b>[인쇄 진행]</b> 창에서 [다음 단계]를 누르세요' + (data.fileTitle ? ' &nbsp;<span style="opacity:.8">(PDF: ' + data.fileTitle + ')</span>' : '');
+    var st = document.createElement('style'); st.textContent = '@media print{#kec-seq-guide{display:none!important}}';
+    document.head.appendChild(st); document.body.appendChild(bar);
+  })();
+
+  // ── 3. 조판 & 인쇄 ─────────────────────────────────────────
+  // rAF 두 번 → DOM이 완전히 렌더된 뒤 측정 시작
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      try {
+        if (multiItems) KECPrint.buildMulti(multiItems);
+        else KECPrint.build('kec-print-source', {
+          orientation: data.orientation || 'portrait',
+          title:       data.title    || '',
+          subtitle:    data.subtitle || '',
+          date:        data.date     || '',
+          author:      data.author   || ''
+        });
+      } catch (e) {
+        showError('조판 오류: ' + e.message);
+        console.error(e);
+        return;
+      }
+
+      // 로딩 오버레이 숨기기
+      hideLoading();
+
+      // 약간의 지연 후 인쇄 다이얼로그
+      setMsg('인쇄 다이얼로그 열기...');
+      setTimeout(function () {
+        // 인쇄 완료(취소 포함) 후 다음 구간(가로 → 참조 DATA)으로 이어서 열기
+        //  ※ Chrome: afterprint는 미리보기 생성 직후(대화상자가 떠 있는 동안) 발생 → 여기서 페이지를 바꾸면 '인쇄에 실패했습니다'
+        //    print()는 대화상자가 닫힐 때까지 멈추므로, print()가 끝난 뒤에 다음 구간으로 이동
+        // 다음 단계는 본 화면(KEC_Tree)의 '인쇄 진행' 창에서 사용자가 확인 후 진행 — 이 창은 자동으로 넘어가거나 닫지 않음
+        window.print();
+      }, 300);
+    });
+  });
+
+  // ── 헬퍼 함수들 ─────────────────────────────────────────────
+  function setMsg(msg) {
+    var el = document.getElementById('loading-msg');
+    if (el) el.textContent = msg;
+  }
+  function hideLoading() {
+    var el = document.getElementById('loading-overlay');
+    if (el) el.style.display = 'none';
+  }
+  function showError(msg) {
+    var lo = document.getElementById('loading-overlay');
+    if (lo) lo.style.display = 'none';
+    var eb = document.getElementById('error-box');
+    var em = document.getElementById('error-msg');
+    if (eb) eb.classList.add('visible');
+    if (em) em.innerHTML = msg;
+  }
+})();
+</script>
+</body>
+</html>

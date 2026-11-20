@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KEC 분기계산서 — 참조 DATA</title>
+<!--
+  ===================================================================
+  KEC 분기계산서 참조 DATA — A4 출력 전용 독립 HTML
+  -------------------------------------------------------------------
+  용도   : Ctrl+P (브라우저 인쇄) / PDF 저장
+  기준   : A4 세로(Portrait), Chrome/Edge
+  방식   : 순수 CSS @media print — JS 페이지엔진 불사용
+  작성일 : 2026-05-26
+  ===================================================================
+-->
+<style>
+/* ================================================================
+   1. 공통 리셋
+   ================================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ================================================================
+   2. 화면(Screen) 레이아웃
+   브라우저에서 볼 때 A4 용지처럼 보이도록 구성
+   ================================================================ */
+body {
+  font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif;
+  font-size: 11px;
+  color: #1a1a1a;
+  background: #d0d0d0;       /* 용지 바깥 배경 */
+  padding: 20px 0;
+}
+
+/* 단일 A4 "용지" 컨테이너
+   실제 A4 폭 210mm, 여백 13mm 기준 → 본문폭 184mm
+   96dpi 기준 210mm ≈ 794px                          */
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto 16px;
+  padding: 13mm 13mm 15mm;   /* 상/좌우/하 여백 */
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,.25);
+  position: relative;
+}
+
+/* ================================================================
+   3. 공통 타이포그래피
+   ================================================================ */
+.doc-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 5px;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  border-bottom: 1px solid #555;
+  padding: 3px 0;
+  margin: 12px 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-sub {
+  font-size: 9px;
+  font-weight: 400;
+  color: #555;
+}
+
+/* ================================================================
+   4. 2-컬럼 그리드 (온도보정 + 복수회로 / k값 + CB정격)
+   출력 시 flex-wrap 대신 table 기반으로 구현
+   ※ 출력 시 flexbox는 불안정할 수 있어 table 레이아웃 사용
+   ================================================================ */
+.two-col-wrap {
+  display: table;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 8px 0;
+  /* ⚠ 출력 주의: display:table은 Chrome 인쇄에서 안정적 */
+}
+.two-col-wrap .col {
+  display: table-cell;
+  width: 50%;
+  vertical-align: top;
+}
+
+/* ================================================================
+   5. 표(Table) 공통 스타일
+   ================================================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5px;
+  table-layout: fixed;       /* 열 너비 고정 — 출력 안정성 핵심 */
+  /* ⚠ table-layout:fixed 이면 열 너비는 colgroup/첫 행이 결정 */
+}
+
+thead {
+  display: table-header-group; /* 페이지 넘김 시 헤더 자동 반복 */
+}
+
+th {
+  background: #ddd;
+  font-weight: 700;
+  text-align: center;
+  padding: 4px 5px;
+  border: 1px solid #666;
+  font-size: 9px;
+  white-space: nowrap;        /* 헤더는 줄바꿈 없이 */
+  word-break: keep-all;
+}
+
+td {
+  padding: 3px 5px;
+  border: 1px solid #888;
+  text-align: center;
+  vertical-align: middle;
+  word-break: keep-all;
+  /* ⚠ white-space:nowrap 제거 — 긴 값 줄바꿈 허용 */
+}
+
+td.left   { text-align: left; }
+td.right  { text-align: right; font-family: 'Courier New', monospace; font-size: 9px; }
+td.bold   { font-weight: 700; }
+td.note   { font-size: 9px; color: #444; text-align: left; }
+
+/* 행 홀짝 구분 */
+tbody tr:nth-child(even) td { background: #f7f7f7; }
+
+/* 강조 행 (비고에 텍스트 있는 행) */
+tr.highlight th,
+tr.highlight td { background: #eee; }
+
+/* ================================================================
+   6. 페이지 헤더 / 푸터
+   ================================================================ */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 2px solid #000;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+  font-size: 9px;
+  color: #444;
+}
+.page-header .title { font-size: 13px; font-weight: 700; color: #000; }
+
+.page-footer {
+  position: absolute;
+  bottom: 8mm;
+  left: 13mm;
+  right: 13mm;
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #666;
+  border-top: 1px solid #ccc;
+  padding-top: 4px;
+}
+
+/* ================================================================
+   7. 섹션 여백 & 분할 제어
+   ================================================================ */
+.ref-section {
+  margin-bottom: 14px;
+  /* ⚠ 아래 속성이 출력 시 섹션 내부 페이지 분할 방지 */
+  break-inside: avoid;
+  page-break-inside: avoid;   /* 구형 호환 */
+}
+
+/* 작은 표(9행 이하)는 강제로 분할 방지 */
+.ref-section.small {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* 큰 표는 분할 허용하되 표 행 내부는 잘리지 않게 */
+.ref-section.large table tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* 두 번째 페이지부터 시작 강제 (허용전류 표 다음) */
+.page-break-before {
+  break-before: page;
+  page-break-before: always;
+}
+
+/* ================================================================
+   8. @media print — 인쇄 전용 오버라이드
+   ================================================================ */
+@media print {
+  /* 인쇄 기본 */
+  @page {
+    size: A4 portrait;
+    margin: 13mm;
+    /* ⚠ Chrome은 @page margin이 헤더/푸터를 포함하므로
+         브라우저 인쇄 다이얼로그에서 "헤더 및 바닥글" 해제 권장 */
+  }
+
+  html, body {
+    background: #fff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 화면용 박스 스타일 제거 */
+  .page {
+    width: 100% !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    /* 각 .page 뒤에 페이지 나눔 (마지막 제외) */
+    break-after: page;
+    page-break-after: always;
+  }
+  .page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* 페이지 헤더/푸터: 화면에서는 top/bottom 이용하지 않으므로 static 처리 */
+  .page-footer {
+    position: static;
+    margin-top: 8px;
+  }
+
+  /* 표 행 분할 방지 */
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* thead 반복 출력 */
+  thead {
+    display: table-header-group;
+  }
+
+  /* 2-컬럼 레이아웃 분할 방지 */
+  .two-col-wrap {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* 섹션 분할 방지 (small) / 행 분할 방지 (large) */
+  .ref-section.small {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .ref-section.large tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* 색상 강제 출력 (Chrome 기준) */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* 그림자·배경 제거 */
+  body { background: #fff !important; }
+  .page { box-shadow: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     페이지 1 : 문서 헤더 + 허용전류 참조표 (공사방법별)
+     ⚠ 출력 위험: 16행 표 — A4 한 페이지 내 수용 가능(약 170px)
+                   여백 포함 시 2페이지로 넘길 수도 있음
+     ================================================================ -->
+<div class="page" id="page1">
+
+  <!-- 페이지 헤더 -->
+  <div class="page-header">
+    <span class="title">KEC 분기계산서 — 참조 DATA</span>
+    <span id="hdr-date1"></span>
+  </div>
+
+  <!-- ① 허용전류 참조표 -->
+  <div class="ref-section large">
+    <div class="section-title">
+      ① 공사방법별 허용전류 [A]
+      <span class="section-sub" id="amp-subtitle">KSC IEC 60364-5-52 / XLPE Cu 90°C / 30°C 기준</span>
+    </div>
+    <table id="ampacity-table">
+      <colgroup>
+        <col style="width:10%">
+        <col style="width:13%"><col style="width:13%"><col style="width:13%">
+        <col style="width:13%"><col style="width:12%"><col style="width:13%"><col style="width:13%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th rowspan="2">단면적<br>[mm²]</th>
+          <th colspan="7">공사방법별 허용전류 [A]</th>
+        </tr>
+        <tr>
+          <th>A1<br><span style="font-weight:400">(관내단심)</span></th>
+          <th>A2<br><span style="font-weight:400">(관내다심)</span></th>
+          <th>B1<br><span style="font-weight:400">(덕트단심)</span></th>
+          <th>B2<br><span style="font-weight:400">(덕트다심)</span></th>
+          <th>D<br><span style="font-weight:400">(직매)</span></th>
+          <th>E<br><span style="font-weight:400">(공중단심)</span></th>
+          <th>F<br><span style="font-weight:400">(공중다심)</span></th>
+        </tr>
+      </thead>
+      <!-- data-base: 30°C 기준 원본값 — JS에서 설계온도 Ct 보정 후 표시값 갱신 -->
+      <tbody>
+        <tr><td class="bold">1.5</td> <td data-base="19.1">19.1</td><td data-base="18.4">18.4</td><td data-base="23">23</td>  <td data-base="22">22</td>  <td data-base="26">26</td>  <td data-base="26">26</td>  <td data-base="27">27</td></tr>
+        <tr><td class="bold">2.5</td> <td data-base="26.1">26.1</td><td data-base="25">25</td>    <td data-base="31">31</td>  <td data-base="30">30</td>  <td data-base="34">34</td>  <td data-base="36">36</td>  <td data-base="37">37</td></tr>
+        <tr><td class="bold">4</td>   <td data-base="34.8">34.8</td><td data-base="33.1">33.1</td><td data-base="42">42</td>  <td data-base="40">40</td>  <td data-base="44">44</td>  <td data-base="49">49</td>  <td data-base="50">50</td></tr>
+        <tr><td class="bold">6</td>   <td data-base="44.5">44.5</td><td data-base="42.2">42.2</td><td data-base="54">54</td>  <td data-base="51">51</td>  <td data-base="56">56</td>  <td data-base="63">63</td>  <td data-base="65">65</td></tr>
+        <tr><td class="bold">10</td>  <td data-base="60.8">60.8</td><td data-base="57.3">57.3</td><td data-base="75">75</td>  <td data-base="69">69</td>  <td data-base="73">73</td>  <td data-base="86">86</td>  <td data-base="90">90</td></tr>
+        <tr><td class="bold">16</td>  <td data-base="81.1">81.1</td><td data-base="75.9">75.9</td><td data-base="100">100</td><td data-base="91">91</td>  <td data-base="95">95</td>  <td data-base="115">115</td><td data-base="121">121</td></tr>
+        <tr><td class="bold">25</td>  <td data-base="106.5">106.5</td><td data-base="99.1">99.1</td><td data-base="133">133</td><td data-base="119">119</td><td data-base="121">121</td><td data-base="149">149</td><td data-base="161">161</td></tr>
+        <tr><td class="bold">35</td>  <td data-base="130.8">130.8</td><td data-base="121.2">121.2</td><td data-base="164">164</td><td data-base="146">146</td><td data-base="146">146</td><td data-base="185">185</td><td data-base="200">200</td></tr>
+        <tr><td class="bold">50</td>  <td data-base="157.6">157.6</td><td data-base="145.5">145.5</td><td data-base="198">198</td><td data-base="175">175</td><td data-base="173">173</td><td data-base="225">225</td><td data-base="242">242</td></tr>
+        <tr><td class="bold">70</td>  <td data-base="199.8">199.8</td><td data-base="183.5">183.5</td><td data-base="253">253</td><td data-base="221">221</td><td data-base="213">213</td><td data-base="289">289</td><td data-base="310">310</td></tr>
+        <tr><td class="bold">95</td>  <td data-base="240.8">240.8</td><td data-base="220.2">220.2</td><td data-base="306">306</td><td data-base="265">265</td><td data-base="252">252</td><td data-base="352">352</td><td data-base="377">377</td></tr>
+        <tr><td class="bold">120</td> <td data-base="277.7">277.7</td><td data-base="252.7">252.7</td><td data-base="354">354</td><td data-base="305">305</td><td data-base="287">287</td><td data-base="410">410</td><td data-base="437">437</td></tr>
+        <tr><td class="bold">150</td> <td data-base="318.3">318.3</td><td data-base="289.6">289.6</td><td data-base="407">407</td><td data-base="349">349</td><td data-base="324">324</td><td data-base="473">473</td><td data-base="504">504</td></tr>
+        <tr><td class="bold">185</td> <td data-base="361.8">361.8</td><td data-base="329.2">329.2</td><td data-base="464">464</td><td data-base="395">395</td><td data-base="363">363</td><td data-base="542">542</td><td data-base="575">575</td></tr>
+        <tr><td class="bold">240</td> <td data-base="424.1">424.1</td><td data-base="386">386</td>    <td data-base="546">546</td><td data-base="462">462</td><td data-base="419">419</td><td data-base="641">641</td><td data-base="679">679</td></tr>
+        <tr><td class="bold">300</td> <td data-base="486.1">486.1</td><td data-base="442.4">442.4</td><td data-base="628">628</td><td data-base="529">529</td><td data-base="474">474</td><td data-base="741">741</td><td data-base="783">783</td></tr>
+      </tbody>
+    </table>
+    <p id="amp-note" style="font-size:8.5px;color:#555;margin-top:4px;">
+      ※ 단상(1Φ2W) 기준. 3상(3Φ) 적용 시 A2·B2·D·F 공법은 ×0.82, A1·B1·E 공법은 ×0.92 보정.<br>
+      ※ 3상 보정 후 값은 계산 시 내부 자동 적용. 위 수치는 단상 기준 원본값.
+    </p>
+  </div>
+
+  <!-- ② 온도보정계수 + 복수회로 (2-컬럼) -->
+  <!--
+    [출력 전략]
+    - 두 표를 나란히 배치. display:table 사용 (flex 대비 출력 안정)
+    - break-inside:avoid 로 분할 방지
+    - 각 컬럼 너비 50% 고정
+  -->
+  <div class="ref-section small">
+    <div class="two-col-wrap">
+      <!-- 온도 보정계수 -->
+      <div class="col">
+        <div class="section-title">
+          ② 온도 보정계수 Ct
+          <span class="section-sub">90°C XLPE, 기준 30°C · Ct = √((90−Ta)/60)</span>
+        </div>
+        <table>
+          <colgroup>
+            <col style="width:45%">
+            <col style="width:30%">
+            <col style="width:25%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>주위온도 Ta [°C]</th>
+              <th>보정계수 Ct</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <!-- data-ta: 온도값 — JS에서 설계온도 행 강조에 사용 -->
+          <tbody id="temp-corr-tbody">
+            <tr data-ta="20"><td>20 °C</td><td>1.080</td><td></td></tr>
+            <tr data-ta="25"><td>25 °C</td><td>1.041</td><td></td></tr>
+            <tr data-ta="30" class="highlight"><td>30 °C</td><td class="bold">1.000</td><td class="note">기준온도</td></tr>
+            <tr data-ta="35"><td>35 °C</td><td>0.957</td><td></td></tr>
+            <tr data-ta="40"><td>40 °C</td><td class="bold">0.913</td><td class="note">설계 일반기준</td></tr>
+            <tr data-ta="45"><td>45 °C</td><td>0.866</td><td></td></tr>
+            <tr data-ta="50"><td>50 °C</td><td>0.816</td><td></td></tr>
+            <tr data-ta="55"><td>55 °C</td><td>0.764</td><td></td></tr>
+            <tr data-ta="60"><td>60 °C</td><td>0.707</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 복수회로 보정계수 -->
+      <div class="col">
+        <div class="section-title">
+          ③ 복수회로 보정계수 Cg
+          <span class="section-sub">표 B.52.17</span>
+        </div>
+        <table>
+          <colgroup><col style="width:20%"><col style="width:16%"><col style="width:16%"><col style="width:16%"><col style="width:16%"><col style="width:16%"></colgroup>
+          <thead>
+            <tr><th>회선수</th><th>1항</th><th>2항</th><th>3항</th><th>4항</th><th>5항</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>1.00</td><td>1.00</td><td>0.95</td><td>1.00</td><td>1.00</td></tr>
+            <tr><td>2</td><td>0.80</td><td>0.85</td><td>0.81</td><td>0.88</td><td>0.87</td></tr>
+            <tr><td>3</td><td>0.70</td><td>0.79</td><td>0.72</td><td>0.82</td><td>0.82</td></tr>
+            <tr><td>4</td><td>0.65</td><td>0.75</td><td>0.68</td><td>0.77</td><td>0.80</td></tr>
+            <tr><td>5</td><td>0.60</td><td>0.73</td><td>0.66</td><td>0.75</td><td>0.80</td></tr>
+            <tr><td>6</td><td>0.57</td><td>0.72</td><td>0.64</td><td>0.73</td><td>0.79</td></tr>
+            <tr><td>7</td><td>0.54</td><td>0.72</td><td>0.63</td><td>0.73</td><td>0.79</td></tr>
+            <tr><td>8</td><td>0.52</td><td>0.71</td><td>0.62</td><td>0.72</td><td>0.78</td></tr>
+            <tr><td>9</td><td>0.50</td><td>0.70</td><td>0.61</td><td>0.72</td><td>0.78</td></tr>
+            <tr><td>12</td><td>0.45</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+            <tr><td>16</td><td>0.41</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+            <tr><td>20</td><td>0.38</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:8px;color:#444;margin-top:3px;line-height:1.45;">1항 기중·벽면 묶음/매설/수납(A~F, 전선관 포함) · 2항 벽·막힘형 트레이 단일층(C) · 3항 목재 천정면 아래 단일층(C) · 4항 환기형 수평/수직 트레이 단일층(E,F) · <b>5항 사다리 지지대·클리트 단일층(E,F) — 본 계산서 기본 적용 (9회로 0.78)</b>. 9회로 초과는 2~5항 감소계수 없음. 비고: 같은 부하의 동일 집합 케이블에 적용, 수평 간격이 외경의 2배 초과 시 미적용.</p>
+      </div>
+    </div><!-- /two-col-wrap -->
+  </div>
+
+  <div class="page-footer">
+    <span>KEC 분기계산서</span>
+    <span>1 / 3</span>
+    <span id="ftr-date1"></span>
+  </div>
+</div><!-- /page1 -->
+
+
+<!-- ================================================================
+     페이지 2 : XLPE 임피던스 (온도·복수회로 보정은 페이지 1로 이동)
+     ⚠ 출력 위험: 2컬럼 섹션 — display:table 로 안정화
+                   임피던스 표(16행) 페이지 넘김 가능성 있음
+     ================================================================ -->
+<div class="page" id="page2">
+
+  <div class="page-header">
+    <span class="title">KEC 분기계산서 — 참조 DATA</span>
+    <span id="hdr-date2"></span>
+  </div>
+
+
+
+  <!-- ④ XLPE Cu 케이블 임피던스 -->
+  <!--
+    [출력 전략]
+    - 16행 × 7열 (단면적 + R/X×3배치)
+    - 수치 정렬: 오른쪽 정렬, 고정폭 폰트
+    - 16행이므로 페이지 남은 공간에 따라 다음 페이지로 넘길 수 있음
+    - break-inside:avoid 는 제거 — 행 단위 avoid만 적용
+  -->
+  <div class="ref-section large" style="margin-top:14px;">
+    <div class="section-title">
+      ④ XLPE Cu 케이블 임피던스
+      <span class="section-sub">Ω/km · 20°C 기준 · KSC IEC 60502 / KEC 232</span>
+    </div>
+    <table>
+      <colgroup>
+        <col style="width:10%">  <!-- 단면적 -->
+        <col style="width:15%">  <!-- 단상 R -->
+        <col style="width:15%">  <!-- 단상 X -->
+        <col style="width:15%">  <!-- 삼각 R -->
+        <col style="width:15%">  <!-- 삼각 X -->
+        <col style="width:15%">  <!-- 평형 R -->
+        <col style="width:15%">  <!-- 평형 X -->
+      </colgroup>
+      <thead>
+        <tr>
+          <th rowspan="2">단면적<br>[mm²]</th>
+          <th colspan="2">단상 (단심)</th>
+          <th colspan="2">3상 삼각배치 (flat)</th>
+          <th colspan="2">3상 평형배치 (trefoil)</th>
+        </tr>
+        <tr>
+          <th>R [Ω/km]</th><th>X [Ω/km]</th>
+          <th>R [Ω/km]</th><th>X [Ω/km]</th>
+          <th>R [Ω/km]</th><th>X [Ω/km]</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="bold">1.5</td>  <td class="right">15.4287</td><td class="right">0.1749</td> <td class="right">15.4287</td><td class="right">0.1749</td> <td class="right">15.4287</td><td class="right">0.1923</td></tr>
+        <tr><td class="bold">2.5</td>  <td class="right">9.4485</td> <td class="right">0.1619</td> <td class="right">9.4485</td> <td class="right">0.1619</td> <td class="right">9.4485</td> <td class="right">0.1793</td></tr>
+        <tr><td class="bold">4</td>    <td class="right">5.8782</td> <td class="right">0.1494</td> <td class="right">5.8782</td> <td class="right">0.1494</td> <td class="right">5.8782</td> <td class="right">0.1668</td></tr>
+        <tr><td class="bold">6</td>    <td class="right">3.9274</td> <td class="right">0.1402</td> <td class="right">3.9274</td> <td class="right">0.1402</td> <td class="right">3.9274</td> <td class="right">0.1576</td></tr>
+        <tr><td class="bold">10</td>   <td class="right">2.3335</td> <td class="right">0.1346</td> <td class="right">2.3335</td> <td class="right">0.1346</td> <td class="right">2.3335</td> <td class="right">0.1520</td></tr>
+        <tr><td class="bold">16</td>   <td class="right">1.4665</td> <td class="right">0.1280</td> <td class="right">1.4665</td> <td class="right">0.1280</td> <td class="right">1.4665</td> <td class="right">0.1455</td></tr>
+        <tr><td class="bold">25</td>   <td class="right">0.9273</td> <td class="right">0.1246</td> <td class="right">0.9273</td> <td class="right">0.1246</td> <td class="right">0.9272</td> <td class="right">0.1421</td></tr>
+        <tr><td class="bold">35</td>   <td class="right">0.6685</td> <td class="right">0.1189</td> <td class="right">0.6686</td> <td class="right">0.1189</td> <td class="right">0.6685</td> <td class="right">0.1363</td></tr>
+        <tr><td class="bold">50</td>   <td class="right">0.4940</td> <td class="right">0.1150</td> <td class="right">0.4940</td> <td class="right">0.1150</td> <td class="right">0.4939</td> <td class="right">0.1324</td></tr>
+        <tr><td class="bold">70</td>   <td class="right">0.3426</td> <td class="right">0.1081</td> <td class="right">0.3427</td> <td class="right">0.1081</td> <td class="right">0.3424</td> <td class="right">0.1255</td></tr>
+        <tr><td class="bold">95</td>   <td class="right">0.2474</td> <td class="right">0.1076</td> <td class="right">0.2474</td> <td class="right">0.1076</td> <td class="right">0.2471</td> <td class="right">0.1250</td></tr>
+        <tr><td class="bold">120</td>  <td class="right">0.1968</td> <td class="right">0.1042</td> <td class="right">0.1968</td> <td class="right">0.1042</td> <td class="right">0.1964</td> <td class="right">0.1216</td></tr>
+        <tr><td class="bold">150</td>  <td class="right">0.1602</td> <td class="right">0.1031</td> <td class="right">0.1603</td> <td class="right">0.1031</td> <td class="right">0.1597</td> <td class="right">0.1205</td></tr>
+        <tr><td class="bold">185</td>  <td class="right">0.1291</td> <td class="right">0.1022</td> <td class="right">0.1291</td> <td class="right">0.1022</td> <td class="right">0.1284</td> <td class="right">0.1196</td></tr>
+        <tr><td class="bold">240</td>  <td class="right">0.0998</td> <td class="right">0.1004</td> <td class="right">0.0998</td> <td class="right">0.1004</td> <td class="right">0.0989</td> <td class="right">0.1179</td></tr>
+        <tr><td class="bold">300</td>  <td class="right">0.0812</td> <td class="right">0.0998</td> <td class="right">0.0811</td> <td class="right">0.0998</td> <td class="right">0.0800</td> <td class="right">0.1172</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:8.5px;color:#555;margin-top:4px;">
+      ※ 20°C 기준값. 운전온도 보정 시 R(T) = R₂₀ × [1 + α(T−20)], 동도체 α = 0.00393/°C
+    </p>
+  </div>
+
+  <div class="page-footer">
+    <span>KEC 분기계산서</span>
+    <span>2 / 3</span>
+    <span id="ftr-date2"></span>
+  </div>
+</div><!-- /page2 -->
+
+
+<!-- ================================================================
+     페이지 3 : 도체상수 k값 + 차단기 정격 / 설계 기준 요약
+     ⚠ 출력 위험: 차단기 정격 30개 — 2컬럼 처리로 공간 절약
+     ================================================================ -->
+<div class="page" id="page3">
+
+  <div class="page-header">
+    <span class="title">KEC 분기계산서 — 참조 DATA</span>
+    <span id="hdr-date3"></span>
+  </div>
+
+  <!-- ⑤ 도체상수 k값 + 차단기 정격 (2-컬럼) -->
+  <div class="ref-section small">
+    <div class="two-col-wrap">
+      <!-- 도체상수 k값 -->
+      <div class="col">
+        <div class="section-title">
+          ⑤ 도체상수 k값
+          <span class="section-sub">KEC / IEC 60364-5-54</span>
+        </div>
+        <table>
+          <colgroup>
+            <col style="width:20%">
+            <col style="width:35%">
+            <col style="width:20%">
+            <col style="width:25%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>재질</th>
+              <th>절연 종류</th>
+              <th>k 값</th>
+              <th>최고온도</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="bold">Cu</td><td class="left">XLPE/EPR 90°C</td><td class="bold">143</td><td>250°C</td></tr>
+            <tr><td class="bold">Cu</td><td class="left">PVC 70°C</td>      <td class="bold">115</td><td>160°C</td></tr>
+            <tr><td class="bold">Al</td><td class="left">XLPE/EPR 90°C</td><td class="bold">94</td> <td>250°C</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:8.5px;color:#555;margin-top:4px;">
+          ※ 단락열내량 계산식: I² × t ≤ (k × S)² [A, s, mm²]
+        </p>
+      </div>
+
+      <!-- 표준 차단기 정격 계열 -->
+      <div class="col">
+        <div class="section-title">
+          ⑥ 표준 차단기 정격 계열
+          <span class="section-sub">KEC / IEC 60898</span>
+        </div>
+        <!--
+          ⚠ 30개 정격값 — 2행으로 분할 배치하여 공간 절약
+          table-layout:fixed, 각 셀 균등 폭
+        -->
+        <table>
+          <colgroup>
+            <col style="width:20%"><col style="width:20%"><col style="width:20%">
+            <col style="width:20%"><col style="width:20%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th colspan="5">정격전류 [A] — 표준 계열</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>6</td><td>10</td><td>15</td><td>16</td><td>20</td></tr>
+            <tr><td>25</td><td>30</td><td>32</td><td>40</td><td>50</td></tr>
+            <tr><td>60</td><td>63</td><td>75</td><td>100</td><td>125</td></tr>
+            <tr><td>150</td><td>175</td><td>200</td><td>225</td><td>250</td></tr>
+            <tr><td>300</td><td>350</td><td>400</td><td>500</td><td>600</td></tr>
+            <tr><td>800</td><td>1,000</td><td>1,200</td><td>1,600</td><td>2,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑦ KEC 232 설계 기준 요약 -->
+  <div class="ref-section small" style="margin-top:14px;">
+    <div class="section-title">
+      ⑦ KEC 232 분기회로 설계 기준 요약
+    </div>
+    <table>
+      <colgroup>
+        <col style="width:28%">
+        <col style="width:35%">
+        <col style="width:37%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>기준</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="left bold">CB 선정 (KEC 212.6.4)</td>
+          <td class="left">IB ≤ IN ≤ IZ</td>
+          <td class="note">설계전류 ≤ CB정격 ≤ 케이블허용전류</td>
+        </tr>
+        <tr>
+          <td class="left bold">전압강하 (KEC 232.3.9)</td>
+          <td class="left">고압 이상 수전: 조명 6% · 기타(동력) 8%<br>저압 수전: 조명 3% · 기타 5%</td>
+          <td class="note">수용가 인입구(고압 수전은 변압기 2차)부터 기기까지 합계, 100 m 초과분 0.005%/m 가산(최대 +0.5%, 200 m에서 6.5%·8.5%), 최종회로는 가능하면 저압 수전 값 이내 (표 232.3-1)</td>
+        </tr>
+        <tr>
+          <td class="left bold">단락열내량 (KEC 232.3.2)</td>
+          <td class="left">I²t ≤ (kS)²</td>
+          <td class="note">k=143(Cu XLPE), S=케이블 단면적[mm²]</td>
+        </tr>
+        <tr>
+          <td class="left bold">허용전류 보정 (IEC 60364)</td>
+          <td class="left">IZ = Iz₀ × Ct × Cg</td>
+          <td class="note">Ct=온도보정, Cg=복수회로 보정</td>
+        </tr>
+        <tr>
+          <td class="left bold">전동기 기동 (KEC 232.3.5)</td>
+          <td class="left">10×IN ≥ Istart</td>
+          <td class="note">직입기동 기준, 기동배수 = 6×IB(기본)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ⑧ 면책 및 주기 -->
+  <div style="margin-top:16px;font-size:8.5px;color:#555;border-top:1px solid #ccc;padding-top:6px;">
+    ※ 본 참조 DATA는 KEC(한국전기설비규정) 및 KSC IEC 60364-5-52(2016) 기준입니다.<br>
+    ※ 계산 결과는 참고용이며, 최종 설계는 관련 법규 및 전문가 검토가 필요합니다.
+  </div>
+
+  <div class="page-footer">
+    <span>KEC 분기계산서</span>
+    <span>3 / 3</span>
+    <span id="ftr-date3"></span>
+  </div>
+</div><!-- /page3 -->
+
+
+<script>
+/* ================================================================
+   초기화
+   - URL 파라미터 수신 (KEC_분기계산서.html 의 printTab(5) 에서 전달)
+     ?title=프로젝트명&no=문서번호&date=날짜
+   - 단독으로 열었을 때는 기본값 사용
+   - KEC_분기계산서.html 에서 열리면 자동 인쇄 후 창 닫힘
+   ================================================================ */
+(function () {
+  /* ── 날짜 유틸 ── */
+  function todayStr() {
+    var d  = new Date();
+    var yy = d.getFullYear();
+    var mo = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    return yy + '-' + mo + '-' + dd;
+  }
+
+  /* ── URL 파라미터 파싱 ── */
+  var params   = new URLSearchParams(window.location.search);
+  var projName = params.get('title') || 'KEC 분기계산서';
+  var projDate = params.get('date') || todayStr();
+  var fromApp  = params.has('title');   // 앱에서 열렸으면 true
+
+  /* ── 페이지 title 업데이트 ── */
+  document.title = params.get('ftitle') || (projName + ' — 참조 DATA');   // PDF 저장 시 기본 파일명
+
+  /* ── 헤더 제목 업데이트 ── */
+  var fullTitle = projName + '  —  참조 DATA';
+  document.querySelectorAll('.page-header .title').forEach(function (el) {
+    el.textContent = fullTitle;
+  });
+
+  /* ── 날짜 삽입 ── */
+  ['hdr-date1','hdr-date2','hdr-date3'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = projDate || todayStr();
+  });
+  ['ftr-date1','ftr-date2','ftr-date3'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = projDate || todayStr();
+  });
+
+  /* ── 설계온도 파싱 ── */
+  var designTemp = parseFloat(params.get('temp'));
+  if (isNaN(designTemp)) designTemp = 30;   // 기본값 30°C
+
+  /* ── 허용전류 온도보정 적용 ───────────────────────────────────
+     공식: Iz = Iz₀ × Ct,  Ct = √((90 − Ta) / 60)
+     30°C 기준(Ct=1.000)과 같으면 원본값 유지 / 다르면 보정값 표시  */
+  (function applyTempCorrection() {
+    var Ct = Math.sqrt((90 - designTemp) / 60);
+    var isBase = (designTemp === 30);
+
+    /* ① 허용전류 표 셀 갱신 */
+    var ampTable = document.getElementById('ampacity-table');
+    if (ampTable) {
+      ampTable.querySelectorAll('[data-base]').forEach(function (td) {
+        var base = parseFloat(td.getAttribute('data-base'));
+        if (!isNaN(base)) {
+          if (isBase) {
+            td.textContent = base;
+          } else {
+            td.textContent = (base * Ct).toFixed(1);
+          }
+        }
+      });
+    }
+
+    /* ② 섹션 부제목 갱신 */
+    var subtitle = document.getElementById('amp-subtitle');
+    if (subtitle) {
+      if (isBase) {
+        subtitle.textContent = 'KSC IEC 60364-5-52 / XLPE Cu 90°C / 30°C 기준';
+      } else {
+        subtitle.textContent =
+          'KSC IEC 60364-5-52 / XLPE Cu 90°C / ' +
+          designTemp + '°C 기준 (Ct = ' + Ct.toFixed(4) + ')';
+      }
+    }
+
+    /* ③ 각주 갱신 */
+    var note = document.getElementById('amp-note');
+    if (note) {
+      if (isBase) {
+        note.innerHTML =
+          '※ 단상(1Φ2W) 기준. 3상(3Φ) 적용 시 A2·B2·D·F 공법은 ×0.82, A1·B1·E 공법은 ×0.92 보정.<br>' +
+          '※ 3상 보정 후 값은 계산 시 내부 자동 적용. 위 수치는 단상 기준 원본값.';
+      } else {
+        note.innerHTML =
+          '※ 단상(1Φ2W) 기준. 3상(3Φ) 적용 시 A2·B2·D·F 공법은 ×0.82, A1·B1·E 공법은 ×0.92 보정.<br>' +
+          '※ 온도보정 적용: 설계온도 ' + designTemp + '°C, Ct = √((90−' + designTemp + ')/60) = ' +
+          Ct.toFixed(4) + ' (30°C 기준값 × ' + Ct.toFixed(4) + ').';
+      }
+    }
+
+    /* ④ 온도보정계수 표에서 해당 행 강조 */
+    var tbody = document.getElementById('temp-corr-tbody');
+    if (tbody) {
+      /* 기존 강조 전부 해제 */
+      tbody.querySelectorAll('tr').forEach(function (tr) {
+        tr.classList.remove('highlight');
+        var cells = tr.querySelectorAll('td');
+        cells.forEach(function (td) { td.classList.remove('bold'); });
+        /* 기존 비고 초기화 — 설계기준 행이 바뀔 경우 대비 */
+        var noteTd = cells[2];
+        if (noteTd) noteTd.textContent = '';
+      });
+
+      /* 새 설계온도 행 강조 */
+      var targetRow = tbody.querySelector('[data-ta="' + designTemp + '"]');
+      if (targetRow) {
+        targetRow.classList.add('highlight');
+        var tds = targetRow.querySelectorAll('td');
+        if (tds[1]) tds[1].classList.add('bold');
+        if (tds[2]) tds[2].textContent = (isBase ? '기준온도' : '설계기준온도');
+      }
+
+      /* 30°C 기준 행도 항상 "기준온도" 표시 (설계온도와 다를 때) */
+      if (!isBase) {
+        var baseRow = tbody.querySelector('[data-ta="30"]');
+        if (baseRow) {
+          var baseTds = baseRow.querySelectorAll('td');
+          if (baseTds[2]) baseTds[2].textContent = '기준온도';
+        }
+      }
+    }
+  })();
+
+  /* ── 앱에서 열렸을 때: 자동 인쇄 → 인쇄 후 창 닫힘 ── */
+  if (fromApp) {
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        (function(){ var b=document.createElement('div'); b.id='kec-seq-guide'; b.setAttribute('style','position:fixed;top:0;left:0;right:0;z-index:99999;background:#1f6feb;color:#fff;font:13px/1.6 sans-serif;padding:8px 14px;text-align:center'); b.innerHTML='🖨 지금 인쇄: <b>참조 DATA</b> — 인쇄(PDF 저장)를 마친 뒤 본 화면의 <b>[인쇄 진행]</b> 창에서 [마침]을 누르세요'; var st=document.createElement('style'); st.textContent='@media print{#kec-seq-guide{display:none!important}}'; document.head.appendChild(st); document.body.appendChild(b); })();
+        window.print();   // 창 닫기·다음 단계는 본 화면의 '인쇄 진행' 창에서 사용자가 진행
+      }, 400);   // DOM·폰트 렌더 완료 후 여유 시간
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
